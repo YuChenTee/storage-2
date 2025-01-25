@@ -220,6 +220,48 @@ button:hover {
     background-color: #c82333; /* Darker red */
 }
 
+.product-group {
+    display: flex; /* Arrange items in a row */
+    align-items: center; /* Vertically align labels and inputs */
+    justify-content: space-between; /* Space out items horizontally */
+    padding-top: 10px; /* Add padding above each row */
+    padding-bottom: 10px; /* Add padding below each row */
+    border-bottom: 1px solid #d3d0d0; /* Optional: Divider between rows */
+}
+
+.product-group span {
+    font-size: 1.0rem; /* Adjust font size of the product name */
+    margin: 0; /* Remove default margins */
+    width: 30%; /* Limit the width of the product name */
+    overflow: hidden; /* Hide overflowing text */
+    text-overflow: ellipsis; /* Show ellipsis for overflowing text */
+    white-space: wrap; /* Prevent text wrapping */
+}
+
+.product-group label {
+    font-size: 0.9rem; /* Adjust the font size of the labels */
+    margin: 0; /* Add spacing to the right of the label */
+}
+
+.product-group input {
+    width: 80px; /* Set a fixed width for inputs */
+    height: 30px; /* Set a consistent height for inputs */
+    padding: 5px; /* Add inner padding */
+    box-sizing: border-box; /* Include padding in width/height calculation */
+    margin: 0;
+}
+
+#productInputsContainer {
+    width: 100%; /* Full width */
+    max-height: 200px; 
+    overflow-y: auto; /* Enable vertical scrolling */
+    padding-left: 10px; /* Add inner padding */
+    padding-right: 10px;
+    background-color: #f9f9f9; /* Light background for visibility */
+    border: 1px solid #ddd; /* Light border for separation */
+    box-sizing: border-box; /* Include padding in width/height calculation */
+    margin-bottom: 15px;
+}
 
 #result {
     display: none;
@@ -540,6 +582,17 @@ th {
     #result, #selectedMaterialsContainer, #editSelectedMaterialsContainer {
         font-size: 12px; /* Smaller font size */
     }
+
+    .product-group span{
+        font-size: 12px;
+    }
+
+    .product-group label{
+        font-size: 12px;
+    }
+    .product-group input {
+        width: 60px; /* Set a fixed width for inputs */
+    }
 }
 @media (max-width: 1000px) {
     .container {
@@ -610,6 +663,16 @@ th {
 
     .select2-container--default .select2-selection--multiple, select, input{
         max-height: 30px;
+    }
+    .product-group span{
+        font-size: 10px;
+    }
+
+    .product-group label{
+        font-size: 10px;
+    }
+    .product-group input {
+        width: 40px; /* Set a fixed width for inputs */
     }
 }
 

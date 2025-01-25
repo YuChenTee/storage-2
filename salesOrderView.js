@@ -91,8 +91,12 @@ function calculateAllSalesOrder() {
 // Function to populate the fields in the Material Check section
 async function populateMaterialCheckFields(products, quantities) {
     const productSelect = $('#productSelect'); // Use jQuery for Select2
-    const resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = '';
+    const resultDiv = document.getElementById('result'); // Result container
+    const container = document.getElementById('productInputsContainer'); // Scrollable container for inputs
+
+    resultDiv.innerHTML = ''; // Clear previous results
+    container.innerHTML = ''; // Clear previous inputs
+    productSelect.empty(); // Clear previous dropdown options using jQuery
 
     // Create an array of [product, quantity] pairs
     let productQuantityPairs = products.map((product, index) => [product, quantities[index]]);
@@ -109,31 +113,41 @@ async function populateMaterialCheckFields(products, quantities) {
         productQuantitiesMap[product] += quantity;
     });
 
-    // Get the sorted unique products and their corresponding summed quantities
-    const uniqueProducts = Object.keys(productQuantitiesMap);
-    const sortedQuantities = uniqueProducts.map(product => productQuantitiesMap[product]);
-
-    // Reset selected options in the productSelect dropdown
-    productSelect.val(uniqueProducts).trigger('change'); // Use Select2's `.val()` and trigger 'change' to update
-
-    // Populate the quantity input field with the summed quantities (sorted)
-    document.getElementById('quantityInput').value = sortedQuantities.join(', ');
-
-    if (Object.keys(cachedBuffers).length === 0){
+    // Fetch buffers and days from the database if they are not already cached
+    if (Object.keys(cachedBuffers).length === 0) {
         await fetchBuffersFromDB();
     }
 
-    if (Object.keys(cachedDays).length === 0){
+    if (Object.keys(cachedDays).length === 0) {
         await fetchDaysFromDB();
     }
 
-    // Populate the buffer input field with cached values or 0 if no cached buffer is available
-    const bufferValues = uniqueProducts.map(product => cachedBuffers[product] || 0);
-    document.getElementById('bufferInput').value = bufferValues.join(', ');
+    const uniqueProducts = Object.keys(productQuantitiesMap);
 
-    // Populate the days input field with cached values or 1 if no cached days is available
-    const daysValues = uniqueProducts.map(product => cachedDays[product] || 1);
-    document.getElementById('daysInput').value = daysValues.join(', ');
+    // Update the dropdown with all unique products
+    uniqueProducts.forEach(product => {
+        productSelect.append($('<option>', { value: product, text: product }));
+    });
+
+    // Select all unique products in the dropdown
+    productSelect.val(uniqueProducts).trigger('change'); // Use Select2's `.val()` method and trigger 'change'
+
+    // Update existing rows or create new ones for each unique product
+    uniqueProducts.forEach(product => {
+        const totalQuantity = productQuantitiesMap[product];
+        const buffer = cachedBuffers[product] || 0;
+        const days = cachedDays[product] || 1;
+
+        // Check if the row for this product already exists
+        let productRow = document.getElementById(`product-row-${product}`);
+
+        if (productRow) {
+            // If the row exists, update the input values
+            document.getElementById(`quantity-${product}`).value = totalQuantity;
+            document.getElementById(`days-${product}`).value = days;
+            document.getElementById(`buffer-${product}`).value = buffer;
+        }
+    });
 }
 
 async function deleteSalesOrder(orderId) {

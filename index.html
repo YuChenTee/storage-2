@@ -99,19 +99,14 @@
             <h2>Calculate Material for Product</h2>
             <form id="materialForm">
                 <label for="productSelect">Select Products:</label>
-                <select id="productSelect" multiple required></select>
-
-                <label for="quantityInput">Enter Quantities (Unit):</label>
-                <input type="text" id="quantityInput" placeholder="e.g. 1, 2, 3">
-
-                <label for="daysInput">Enter Number of Days:</label>
-                <input type="text" id="daysInput" placeholder="e.g. 1, 2, 3">
-
-                <label for="bufferInput">Enter Additional Buffers (%):</label>
-                <input type="text" id="bufferInput" placeholder="e.g. 0, 10, 20">
-
+                <select id="productSelect" multiple required>
+                    <!-- Options will be populated dynamically -->
+                </select>
+        
+                <div id="productInputsContainer"></div>
+        
                 <button type="submit">Calculate</button>
-
+        
                 <!-- Message display -->
                 <div id="updateMessage8" style="display:none; margin-top: 10px; font-weight: bold;"></div>
             </form>

@@ -4,6 +4,7 @@ function handleMaterialCheckFormSubmission() {
         e.preventDefault();
         checkMaterials();
     });
+    $('#productSelect').on('change', updateProductInputs);
 }
 
 // Function to fetch product details from the database
@@ -23,83 +24,91 @@ async function fetchProductDetails(productId) {
     });
 }
 
+function updateProductInputs() {
+    const productSelect = document.getElementById('productSelect');
+    const container = document.getElementById('productInputsContainer');
+    
+    // Clear previous inputs
+    container.innerHTML = '';
+
+    // Add input fields for each selected product
+    Array.from(productSelect.selectedOptions).forEach(option => {
+        const productId = option.value;
+        const productName = option.text;
+
+        const productGroup = document.createElement('div');
+        productGroup.classList.add('product-group');
+        productGroup.innerHTML = `
+            <span id="product-row-${productName}">${productName}</span>
+            
+            <label for="quantity-${productId}">Qty:</label>
+            <input type="number" id="quantity-${productId}" class="quantity-input" placeholder="1" step="any" required>
+            
+            <label for="days-${productId}">Days:</label>
+            <input type="number" id="days-${productId}" class="days-input" placeholder="1" step="any" required>
+
+            <label for="buffer-${productId}">Buffer:</label>
+            <input type="number" id="buffer-${productId}" class="buffer-input" placeholder="%" step="any" required>
+        `;
+        container.appendChild(productGroup);
+    });
+}
+
 // Function to check material availability for all selected products
 async function checkMaterials() {
     const selectedProducts = Array.from(document.getElementById('productSelect').selectedOptions).map(option => option.value);
-    const quantities = document.getElementById('quantityInput').value.split(',').map(Number);
-    const buffers = document.getElementById('bufferInput').value.split(',').map(val => parseFloat(val) / 100); // Convert to decimal
-    const numberOfDays = document.getElementById('daysInput').value.split(',').map(Number); // Capture the number of days
     const resultDiv = document.getElementById('result');
-
-    if (quantities.some(qty => qty <= 0) || quantities.length !== selectedProducts.length || buffers.length !== selectedProducts.length || numberOfDays.length !== selectedProducts.length) {
-        showUpdateMessage('updateMessage8', 'Please enter valid quantities, number of days and buffers. eg: 3 selected products should have 3 quantity values, 3 days values and 3 buffer values seperated with 2 commas', true);
-        resultDiv.innerHTML = ``;
-        return;
-    }
 
     let combinedMaterials = {};
     let insufficientMaterials = [];
     let sufficientMaterials = [];
     let materialLeft = {};
     let maxProduction = Infinity;
-    let productBuffers = new Map(); // To store buffers for all products
-    let numOfDays = new Map(); // To store number of days for all products
+    let productBuffers = new Map();
+    let numOfDays = new Map();
 
-    // Iterate over each selected product
-    for (let index = 0; index < selectedProducts.length; index++) {
-        const productId = selectedProducts[index];
-        const quantity = quantities[index];
-        const buffer = buffers[index];
-        const days = numberOfDays[index];
+    for (const productId of selectedProducts) {
+        const quantity = Number(document.getElementById(`quantity-${productId}`).value);
+        const days = Number(document.getElementById(`days-${productId}`).value);
+        const buffer = Number(document.getElementById(`buffer-${productId}`).value) / 100;
+
+        if (quantity <= 0 || days <= 0 || buffer < 0) {
+            showUpdateMessage('updateMessage8', `Invalid inputs for product: ${productId}. Please check your entries.`, true);
+            resultDiv.innerHTML = '';
+            return;
+        }
 
         let productData;
-
         if (cachedProductDetails[productId]) {
-            console.log(`Product details for ${productId} retrieved from cache.`);
             productData = cachedProductDetails[productId];
         } else {
-            console.log(`Product details for ${productId} not found in cache. Fetching from database...`);
             productData = await fetchProductDetails(productId);
-
-            if (productData) {
-                // Cache the fetched product details
-                cachedProductDetails[productId] = productData;
-            } else {
-                resultDiv.innerHTML = `<p>Error fetching details for product: ${productId}. Please try again.</p>`;
-                return;
-            }
+            if (productData) cachedProductDetails[productId] = productData;
         }
-        productBuffers.set(productId, buffer * 100); // Store the buffer as a percentage
+
+        productBuffers.set(productId, buffer * 100);
         numOfDays.set(productId, days);
 
         for (const [material, details] of Object.entries(productData)) {
             const requiredPerUnit = details.quantity;
-            const materialConstant = details.constant || 0; // Assuming constant is optional
+            const materialConstant = details.constant || 0;
 
-            const requiredTotal = (requiredPerUnit * quantity) + (materialConstant*days);
+            const requiredTotal = (requiredPerUnit * quantity) + (materialConstant * days);
             const requiredTotalWithBuffer = requiredTotal * (1 + buffer);
 
-            if (combinedMaterials[material]) {
-                combinedMaterials[material] += requiredTotalWithBuffer;
-            } else {
-                combinedMaterials[material] = requiredTotalWithBuffer;
-            }
+            combinedMaterials[material] = (combinedMaterials[material] || 0) + requiredTotalWithBuffer;
         }
     }
 
-    // Save all buffers with a single Firestore write
     await saveBufferToDB(productBuffers);
     await saveDaysToDB(numOfDays);
-
     await fetchBuffersFromDB();
     await fetchDaysFromDB();
 
-    // Check the availability of combined materials
     for (const [material, requiredTotalWithBuffer] of Object.entries(combinedMaterials)) {
         const availableMaterial = cachedMaterials[material] || 0;
         let outstanding = 0;
 
-        // Check the outstanding orders for the material
         for (const order of Object.values(cachedOrders)) {
             if (order.materialKey === material) {
                 if (order.status === 'Pending') {
@@ -112,7 +121,7 @@ async function checkMaterials() {
         }
 
         const totalAvailableWithOutstanding = availableMaterial + outstanding;
-        const shortage = requiredTotalWithBuffer-totalAvailableWithOutstanding;
+        const shortage = requiredTotalWithBuffer - totalAvailableWithOutstanding;
 
         const possibleProduction = Math.floor(totalAvailableWithOutstanding / requiredTotalWithBuffer);
 
@@ -128,7 +137,6 @@ async function checkMaterials() {
         }
     }
 
-    // Display results
     displayCombinedMaterialCheckResults(resultDiv, sufficientMaterials, insufficientMaterials, maxProduction);
 }
 

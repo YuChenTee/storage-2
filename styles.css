@@ -1,0 +1,616 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 1200px;
+    max-width: 1200px;
+}
+
+.login-container-small {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+    background-color: #28a745;
+    border-radius: 8px;
+}
+
+nav ul li {
+    flex: 1;
+    text-align: center;
+}
+
+nav ul li a {
+    display: block;
+    padding: 10px;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 8px;
+}
+
+nav ul li a:hover, nav ul li a.active {
+    background-color: #218838;
+}
+
+/* Ensure the select2 dropdown appears on top */
+.select2-container--default .select2-dropdown {
+    z-index: 110000 !important; /* Adjust the value as needed */
+}
+/* Dropdown container */
+.dropdown {
+    position: relative;
+}
+
+/* Dropdown button */
+.dropbtn {
+    cursor: pointer;
+}
+
+/* Dropdown content (hidden by default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #28a745;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    z-index: 120000;
+    border-radius: 8px;
+    padding: 0;
+}
+
+/* Dropdown content links */
+.dropdown-content a {
+    color: white;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+    border-radius: 8px;
+}
+
+/* Dropdown content links hover effect */
+.dropdown-content a:hover {
+    background-color: #218838;
+}
+
+/* Show the dropdown content on hover */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* Adjust the dropdown content to fit under the button */
+.dropdown-content {
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+}
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+select, input{
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+select option:hover {
+    background-color: #218838; /* Green color for hovered options */
+    color: white; /* White text color for contrast */
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-between; /* Evenly space the buttons */
+}
+
+.update-btn {
+    flex: 1; /* Make all buttons have equal width */
+}
+
+.update-btn:last-child {
+    margin-right: 0; /* Remove the margin from the last button */
+}
+
+/* Individual button colors */
+#addMaterialBtn {
+    background-color: #28a745; /* Green */
+}
+
+#addMaterialBtn:hover {
+    background-color: #218838; /* Darker green */
+}
+
+#deductMaterialBtn {
+    background-color: #ffc107; /* Yellow */
+}
+
+#deductMaterialBtn:hover {
+    background-color: #e0a800; /* Darker yellow */
+}
+
+#deleteMaterialBtn, #removeProductButton {
+    background-color: #dc3545; /* Red */
+}
+
+#deleteMaterialBtn:hover, #removeProductButton:hover {
+    background-color: #c82333; /* Darker red */
+}
+
+#clearThresholdBtn {
+    background-color: #dc3545; /* Red */
+}
+
+#clearThresholdBtn:hover {
+    background-color: #c82333; /* Darker red */
+}
+
+#deleteOrderButton {
+    background-color: #dc3545; /* Red */
+}
+
+#deleteOrderButton:hover {
+    background-color: #c82333; /* Darker red */
+}
+
+#deleteSalesOrderButton {
+    background-color: #dc3545; /* Red */
+}
+
+#deleteSalesOrderButton:hover {
+    background-color: #c82333; /* Darker red */
+}
+
+#closeDeductPopupBtn{
+    background-color: #dc3545; /* Red */
+}
+
+#closeDeductPopupBtn:hover {
+    background-color: #c82333; /* Darker red */
+}
+
+
+#result {
+    display: none;
+    position: relative;
+    margin-top: 20px;
+    font-size: 16px;
+    color: #333;
+    max-height: 220px; /* Set the maximum height */
+    overflow-y: auto; /* Enable vertical scrolling */
+    border: 1px solid #ccc; /* Add a border */
+    padding-left: 10px; /* Add some padding inside the border */
+    padding-right: 10px; /* Add some padding inside the border */
+    border-radius: 5px; /* Optional: Round the corners of the border */
+}
+
+#deductPopup{
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 90%;
+    height: 90%;
+    z-index: 9999;
+    background-color: white;
+    padding-top: 0;
+    padding-bottom: 20px;
+    transform: translate(-50%,-50%);
+    font-size: 16px;
+    color: #333;
+    overflow-y: auto; /* Enable vertical scrolling */
+    border: 1px solid #ccc; /* Add a border */
+    padding-left: 10px; /* Add some padding inside the border */
+    padding-right: 10px; /* Add some padding inside the border */
+    border-radius: 5px; /* Optional: Round the corners of the border */
+}
+
+#deductPopupContent {
+    overflow-y: auto; /* Enable vertical scrolling inside the content */
+    height: 75%; /* Fixed height for the content section */
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 2%;
+}
+
+/* Button styling */
+#enlargeBtn,  #enlargeMaterialContainerBtn, #enlargeEditMaterialContainerBtn{
+    position: absolute;
+    top: 10px; /* Adjust as needed */
+    right: 10px; /* Adjust as needed */
+    width: 10%;
+    font-size: 90%;
+}
+
+
+/* Background blur effect */
+#blur {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    backdrop-filter: blur(5px); /* Apply blur effect */
+    z-index: 9998; /* Behind the result div */
+    display: none; /* Hidden by default */
+}
+
+/* Styling for Select2 */
+.select2-container {
+    width: 100% !important; /* Ensure Select2 takes full width */
+    margin-bottom: 15px; /* Match margin with other input fields */
+}
+
+/* Highlighted option styling */
+.select2-results__option--highlighted {
+    background-color: #218838 !important; /* Darker green color for highlighted options */
+    color: white !important; /* Text color */
+}
+
+p{
+    font-size: 1.2rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid #ccc;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f4f4f4;
+}
+
+#tableContainer, #historyTableContainer, #batchInfoTableContainer {
+    height: 400px; /* Set a fixed height for the container */
+    overflow-y: auto; /* Enable vertical scrolling if content exceeds container height */
+    border: 1px solid #ddd; /* Optional: add a border around the container */
+    margin-top: 10px; /* Add some space above the container */
+}
+
+#pendingOrdersTableContainer {
+    height: 150px;
+    overflow-y: auto; /* Enable vertical scrolling if content exceeds container height */
+    border: 1px solid #ddd; /* Optional: add a border around the container */
+    margin-top: 10px; /* Add some space above the container */
+    font-size: 14px;
+}
+
+#pendingSalesOrdersTableContainer{
+    height: 300px;
+    overflow-y: auto; /* Enable vertical scrolling if content exceeds container height */
+    border: 1px solid #ddd; /* Optional: add a border around the container */
+    margin-top: 10px; /* Add some space above the container */
+    font-size: 14px;
+}
+
+#materialListTable, #materialHistoryTable, #batchInfoTable, #pendingOrdersTable, #pendingSalesOrdersTable {
+    width: 100%; /* Make the table take the full width of its container */
+    border-collapse: collapse; /* Collapse borders to remove double borders */
+}
+
+#materialListTable th, #materialListTable td , #materialHistoryTable th, #materialHistoryTable td, #batchInfoTable th, #batchInfoTable td, #pendingOrdersTable th, #pendingOrdersTable td, #pendingSalesOrdersTable th, #pendingSalesOrdersTable td {
+    border: 1px solid #ddd; /* Light gray border for the cells */
+    padding: 8px; /* Add some padding for better readability */
+    text-align: center; /* Center the text in the cells */
+}
+
+#materialListTable th, #materialHistoryTable th, #batchInfoTable th, #pendingOrdersTable th, #pendingSalesOrdersTable th {
+    background-color: #f4f4f4; /* Light background for header cells */
+    font-weight: bold; /* Make header text bold */
+}
+
+#materialListTable td, #materialHistoryTable td, #batchInfoTable td, #pendingOrdersTable td, #pendingSalesOrdersTable td {
+    background-color: #fff; /* White background for data cells */
+}
+
+.sortable {
+    cursor: pointer;
+}
+
+.sortable:hover {
+    text-decoration: underline;
+    background-color: #f0f0f0;
+}
+
+.clickable{
+    cursor: pointer;
+}
+
+.clickable:hover{
+    text-decoration: underline;
+    background-color: #f0f0f0;
+}
+
+/* Modal background */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.7); /* Black background with opacity */
+}
+
+/* Modal content */
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 400px; /* Maximum width */
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Modal message */
+#confirmMessage {
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+/* Modal buttons */
+.modal-buttons {
+    display: flex;
+    justify-content: space-around;
+}
+
+.modal-buttons button {
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    margin: 10px;
+}
+
+#confirmYesBtn {
+    background-color: #28a745;
+    color: white;
+}
+
+#confirmYesBtn:hover {
+    background-color: #45a049;
+}
+
+#confirmNoBtn {
+    background-color: #f44336;
+    color: white;
+}
+
+#confirmNoBtn:hover {
+    background-color: #e53935;
+}
+
+.material-quantity-group {
+    margin-bottom: 10px;
+}
+
+.material-quantity-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.material-quantity-group input {
+    width: 80%;
+    padding: 8px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+#selectedMaterialsContainer, #editSelectedMaterialsContainer{
+    position: relative;
+    height: 100px;
+    max-height: 100px;
+    overflow-y: auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+
+/* Ensure the Select2 dropdown itself has a proper width */
+.select2-container--default .select2-selection--multiple {
+    max-height: 60px; /* Adjust to fit the input box */
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+@media (max-width: 1250px) {
+    .container {
+        max-width: 900px;
+    }
+    h1 {
+        font-size: 20px;
+    }
+    h2 {
+        font-size: 16px;
+    }
+
+    label{
+        font-size: 12px;
+    }
+
+    .select2-container--default .select2-selection--multiple, select, input{
+        max-height: 30px;
+    }
+    button {
+        font-size: 14px;
+    }
+
+    p{
+        font-size: 1rem;
+    }
+
+    li {
+        font-size: 14px;
+    }
+
+    #calculateAllSalesOrder{
+        width: 25%;
+        font-size: 0.7rem;
+    }
+    #tableContainer, #historyTableContainer, #batchInfoTableContainer {
+        height: 300px; /* Adjust height for smaller screens */
+    }
+    #pendingOrdersTableContainer{
+        height: 120px; /* Adjust height for smaller screens */
+    }
+
+    #pendingSalesOrdersTableContainer{
+        height: 200px;
+    }
+
+    #materialListTable th, #materialListTable td, #materialHistoryTable th, #materialHistoryTable td , #batchInfoTable th, #batchInfoTable td, #pendingOrdersTable th, #pendingOrdersTable td, #pendingSalesOrdersTable th, #pendingSalesOrdersTable td {
+        padding: 6px; /* Reduce padding */
+        font-size: 12px; /* Smaller font size */
+    }
+
+    #result, #selectedMaterialsContainer, #editSelectedMaterialsContainer {
+        font-size: 12px; /* Smaller font size */
+    }
+}
+@media (max-width: 1000px) {
+    .container {
+        max-width: 90%;
+    }
+    h1 {
+        font-size: 18px;
+    }
+    h2{
+        font-size: 12px;
+    }
+    label {
+        font-size: 10px;
+    }
+
+    button {
+        font-size: 12px;
+    }
+
+    li {
+        font-size: 7px;
+    }
+
+    nav ul li a {
+        padding: 5px;
+    }
+    #tableContainer, #historyTableContainer, #batchInfoTableContainer {
+        height: 200px; /* Further reduce height for very small screens */
+    }
+
+    #pendingOrdersTableContainer{
+        height: 80px; /* Further reduce height for very small screens */
+    }
+
+    #pendingSalesOrdersTableContainer{
+        height: 150px;
+    }
+
+    #materialListTable th, #materialListTable td, #materialHistoryTable th, #materialHistoryTable td, #batchInfoTable th, #batchInfoTable td, #pendingOrdersTable th, #pendingOrdersTable td, #pendingSalesOrdersTable th, #pendingSalesOrdersTable td {
+        padding: 4px; /* Further reduce padding */
+        font-size: 8px; /* Smaller font size */
+    }
+
+    #result, #selectedMaterialsContainer, #editSelectedMaterialsContainer {
+        font-size: 12px; /* Smaller font size */
+    }
+
+    p{
+        font-size: 0.8rem;
+    }
+
+    table, th, td {
+        font-size: 0.5rem; /* Adjust font size for smaller screens */
+    }
+    
+    th, td {
+        padding: 6px; /* Adjust padding for smaller screens */
+    }
+
+    #enlargeBtn, #enlargeMaterialContainerBtn, #enlargeEditMaterialContainerBtn{
+        width: 15%;
+        font-size: 0.5rem;
+    }
+    #calculateAllSalesOrder{
+        width: 20%;
+        font-size: 0.5rem;
+    }
+
+    .select2-container--default .select2-selection--multiple, select, input{
+        max-height: 30px;
+    }
+}
+
+

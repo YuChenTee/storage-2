@@ -27,8 +27,22 @@ async function fetchProductDetails(productId) {
 function updateProductInputs() {
     const productSelect = document.getElementById('productSelect');
     const container = document.getElementById('productInputsContainer');
-    
-    // Clear previous inputs
+
+    // Preserve existing inputs and their values
+    const existingInputs = {};
+    Array.from(container.children).forEach(child => {
+        const productId = child.dataset.productId; // Retrieve product ID from data attribute
+        existingInputs[productId] = {
+            element: child,
+            values: {
+                quantity: child.querySelector(`.quantity-input`).value,
+                days: child.querySelector(`.days-input`).value,
+                buffer: child.querySelector(`.buffer-input`).value,
+            }
+        };
+    });
+
+    // Clear the container
     container.innerHTML = '';
 
     // Add input fields for each selected product
@@ -36,21 +50,35 @@ function updateProductInputs() {
         const productId = option.value;
         const productName = option.text;
 
-        const productGroup = document.createElement('div');
-        productGroup.classList.add('product-group');
-        productGroup.innerHTML = `
-            <span id="product-row-${productName}">${productName}</span>
-            
-            <label for="quantity-${productId}">Qty:</label>
-            <input type="number" id="quantity-${productId}" class="quantity-input" placeholder="1" step="any" required>
-            
-            <label for="days-${productId}">Days:</label>
-            <input type="number" id="days-${productId}" class="days-input" placeholder="1" step="any" required>
+        if (existingInputs[productId]) {
+            // Reuse existing input group and restore values
+            const existingGroup = existingInputs[productId].element;
+            const values = existingInputs[productId].values;
 
-            <label for="buffer-${productId}">Buffer:</label>
-            <input type="number" id="buffer-${productId}" class="buffer-input" placeholder="%" step="any" required>
-        `;
-        container.appendChild(productGroup);
+            existingGroup.querySelector(`.quantity-input`).value = values.quantity;
+            existingGroup.querySelector(`.days-input`).value = values.days;
+            existingGroup.querySelector(`.buffer-input`).value = values.buffer;
+
+            container.appendChild(existingGroup);
+        } else {
+            // Create a new input group for new products
+            const productGroup = document.createElement('div');
+            productGroup.classList.add('product-group');
+            productGroup.dataset.productId = productId; // Store product ID for easy lookup
+            productGroup.innerHTML = `
+                <span id="product-row-${productName}">${productName}</span>
+                
+                <label for="quantity-${productId}">Qty:</label>
+                <input type="number" id="quantity-${productId}" class="quantity-input" placeholder="1" step="any" required>
+                
+                <label for="days-${productId}">Days:</label>
+                <input type="number" id="days-${productId}" class="days-input" placeholder="1" step="any" required>
+    
+                <label for="buffer-${productId}">Buffer:</label>
+                <input type="number" id="buffer-${productId}" class="buffer-input" placeholder="%" step="any" required>
+            `;
+            container.appendChild(productGroup);
+        }
     });
 }
 

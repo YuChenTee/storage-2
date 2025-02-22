@@ -15,6 +15,7 @@ const db = firebase.firestore();
 window.onload = function() {
     // Find the link element for the "Material Check" section
     const materialCheckLink = document.querySelector('nav ul li a[href="#"]');
+    backupIfNeeded();
     showSection('materialList', materialCheckLink);
     initializeSelect2();
     initializeThresholdCache();

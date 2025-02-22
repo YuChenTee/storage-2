@@ -115,6 +115,133 @@ function parseCustomDateTime(dateTimeString) {
     return new Date(year, month - 1, day, hours, minutes, seconds);
 }
 
+async function duplicateCollection(srcCollectionName, destCollectionName) {
+    const batchSize = 500; // Firestore limits batch writes to 500
+    const srcCollectionRef = db.collection(srcCollectionName);
+    const destCollectionRef = db.collection(destCollectionName);
+
+    try {
+        // Get all documents from the source collection
+        const snapshot = await srcCollectionRef.get();
+
+        if (snapshot.empty) {
+            console.log(`No documents found in collection: ${srcCollectionName}`);
+            return;
+        }
+
+        let batch = db.batch();
+        let writeCount = 0;
+
+        snapshot.forEach(doc => {
+            const docData = doc.data();
+            const newDocRef = destCollectionRef.doc(doc.id); // Create a new document with the same ID
+            batch.set(newDocRef, docData); // Copy data to the new document
+
+            writeCount++;
+            if (writeCount === batchSize) {
+                batch.commit();
+                console.log(`Committed a batch of ${batchSize} writes.`);
+                batch = db.batch(); // Reset batch after commit
+                writeCount = 0;
+            }
+        });
+
+        if (writeCount > 0) {
+            await batch.commit(); // Commit the remaining writes
+            console.log(`Committed a batch of ${writeCount} writes.`);
+        }
+
+        console.log(`Successfully duplicated collection from ${srcCollectionName} to ${destCollectionName}`);
+    } catch (error) {
+        console.error('Error duplicating collection:', error);
+    }
+}
+
+async function backupIfNeeded() {
+    const backupMetadataRef = db.collection('backup_time').doc('backup_metadata');
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[-T:]/g, '').slice(0, 8); // Format: YYYYMMDD
+
+    try {
+        const docSnapshot = await backupMetadataRef.get();
+        let backupHistory = [];
+
+        if (docSnapshot.exists) {
+            backupHistory = docSnapshot.data().history || [];
+        }
+
+        // Check if the last backup is recent (e.g., within 24 hours)
+        if (backupHistory.length > 0) {
+            const lastBackupDate = new Date(backupHistory[backupHistory.length - 1].timestamp);
+            if ((now - lastBackupDate) < 24 * 60 * 60 * 1000) {
+                console.log('Recent backup exists. No action needed.');
+                return;
+            }
+        }
+
+        console.log('Running backup...');
+
+        // Create timestamped backup names
+        const collectionsToBackup = [
+            'buffer', 'history', 'materials', 'numOfDays', 
+            'orders', 'product_list', 'products', 'salesOrder', 'thresholds'
+        ];
+
+        for (const collection of collectionsToBackup) {
+            const newBackupName = `${collection}_backup_${timestamp}`;
+            await duplicateCollection(collection, newBackupName);
+        }
+
+        // Update backup history
+        backupHistory.push({ timestamp: now.toISOString(), id: timestamp });
+
+        // Keep only the last 3 backups
+        if (backupHistory.length > 3) {
+            const oldBackup = backupHistory.shift(); // Remove the oldest backup
+            for (const collection of collectionsToBackup) {
+                const oldBackupName = `${collection}_backup_${oldBackup.id}`;
+                await deleteCollection(oldBackupName); // Ensure you have a delete function
+            }
+        }
+
+        // Save updated history
+        await backupMetadataRef.set({ history: backupHistory });
+
+        console.log('Backup completed and history updated.');
+    } catch (error) {
+        console.error('Error handling backup:', error);
+    }
+}
+
+// Helper function to delete an entire collection
+async function deleteCollection(collectionName) {
+    const collectionRef = db.collection(collectionName);
+    const snapshot = await collectionRef.get();
+    
+    if (snapshot.empty) return;
+
+    const batchSize = 500;
+    let batch = db.batch();
+    let count = 0;
+
+    for (const doc of snapshot.docs) {
+        batch.delete(doc.ref);
+        count++;
+
+        if (count === batchSize) {
+            await batch.commit();
+            batch = db.batch();
+            count = 0;
+        }
+    }
+
+    if (count > 0) {
+        await batch.commit();
+    }
+
+    console.log(`Deleted old backup: ${collectionName}`);
+}
+
 // Optional: Close the modal if the user clicks outside of it
 window.onclick = function(event) {
     const modal = document.getElementById('customConfirmModal');

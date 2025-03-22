@@ -137,21 +137,12 @@ async function updateOrderAndAddToInventory(item, receivedQuantity, batchNumber,
     // Check the cache first
     let history = cachedMaterialHistory[item];
     if (!history) {
-        // If not in cache, fetch from database
         history = await fetchMaterialHistoryFromDB(item);
         if (!history) {
             showUpdateMessage('updateMessage7', `No history found for ${item}.`, true);
             return;
         }
     }
-
-    // Check if the batch number already exists
-    // for (const [key, entry] of Object.entries(history)) {
-    //     if (entry.batchNo === batchNumber) {
-    //         showUpdateMessage('updateMessage7', `Batch number ${batchNumber} already exists.`, true);
-    //         return;
-    //     }
-    // }
 
     const materialRef = db.collection('materials').doc('materials');
     const historyRef = db.collection('history').doc(item);
@@ -163,9 +154,10 @@ async function updateOrderAndAddToInventory(item, receivedQuantity, batchNumber,
 
             const batch = db.batch();
 
-            batch.update(materialRef, {
+            // Use set() with merge to increment the quantity instead of update()
+            batch.set(materialRef, {
                 [item]: firebase.firestore.FieldValue.increment(receivedQuantity)
-            });
+            }, { merge: true });
 
             batch.set(historyRef, {
                 [datetime]: {
@@ -183,25 +175,23 @@ async function updateOrderAndAddToInventory(item, receivedQuantity, batchNumber,
                 initializeMaterialCacheAndDropdowns();
                 await fetchMaterialHistoryFromDB(item); // Update the cache after adding
                 showUpdateMessage('updateMessage7', `Successfully added ${receivedQuantity} of ${item} (Batch: ${batchNumber}, Expiry: ${expiryDate}).`);
-                
+
                 if (!deleteOrderAfter) {
                     if (cachedOrders[orderId].status === 'Pending') {
                         cachedOrders[orderId].status = `Partial Received: ${receivedQuantity}`;
-                    }
-                    else{
+                    } else {
                         const partialReceivedAmount = cachedOrders[orderId].status.split(' ')[2];
                         cachedOrders[orderId].status = `Partial Received: ${parseFloat(partialReceivedAmount) + receivedQuantity}`;
                     }
                 }
-                
-                // If deleteOrderAfter is true, remove the processed order from cachedOrders and Firestore
+
                 if (deleteOrderAfter) {
                     delete cachedOrders[orderId];
-                } 
-                // Update the order in Firestore with the new quantity
-                await db.collection('orders').doc('orders').set(cachedOrders);
+                }
 
-                // Refresh the orders table
+                // Use set() with merge to update the orders
+                await db.collection('orders').doc('orders').set(cachedOrders, { merge: true });
+
                 initializeOrderCacheAndDropdowns();
             }).catch((error) => {
                 console.error("Error adding item: ", error);
@@ -216,6 +206,7 @@ async function updateOrderAndAddToInventory(item, receivedQuantity, batchNumber,
         showUpdateMessage('updateMessage7', `Error fetching material quantity: ${error.message}`, true);
     });
 }
+
 
 async function deleteOrder(orderId) {
     if (!orderId) {

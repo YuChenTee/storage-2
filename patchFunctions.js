@@ -26,15 +26,6 @@ async function restoreBackup(backupId) {
 
 async function renameMaterialName(oldName, newName) {
     try {
-        // === 1. buffer.collection('buffer').doc('buffer') ===
-        const bufferRef = db.collection('buffer').doc('buffer');
-        const bufferSnap = await bufferRef.get();
-        if (bufferSnap.exists && bufferSnap.data()[oldName] !== undefined) {
-            const bufferData = bufferSnap.data();
-            bufferData[newName] = bufferData[oldName];
-            delete bufferData[oldName];
-            await bufferRef.set(bufferData);
-        }
 
         // === 2. history.collection('history').doc(oldName) ===
         const oldHistoryRef = db.collection('history').doc(oldName);

@@ -20,14 +20,16 @@ function setMaterialThreshold() {
         return;
     }
 
-    // Write the threshold to the Firestore database
-    db.collection("thresholds").doc("thresholds").update({
+    // Write the threshold using set with merge = true
+    db.collection("thresholds").doc("thresholds").set({
         [materialName]: thresholdQuantity
-    }).then(() => {
+    }, { merge: true })
+    .then(() => {
         console.log("Threshold set successfully for material:", materialName);
         showUpdateMessage('updateMessage3', `Threshold for ${materialName} successfully set to ${thresholdQuantity}.`);
         initializeThresholdCache();
-    }).catch((error) => {
+    })
+    .catch((error) => {
         console.error("Error setting threshold: ", error);
         showUpdateMessage('updateMessage3', `Error setting threshold: ${error.message}`, true);
     });
@@ -42,14 +44,16 @@ function clearThresholdForMaterial() {
         return;
     }
 
-    // Update the thresholds collection in Firestore to remove the threshold for the selected material
-    db.collection("thresholds").doc("thresholds").update({
+    // Remove the threshold field using FieldValue.delete()
+    db.collection("thresholds").doc("thresholds").set({
         [materialName]: firebase.firestore.FieldValue.delete()
-    }).then(() => {
+    }, { merge: true })
+    .then(() => {
         console.log(`Threshold cleared successfully for ${materialName}`);
         showUpdateMessage('updateMessage3', `Threshold for ${materialName} has been cleared.`);
-        initializeThresholdCache(); // Refresh the cached thresholds
-    }).catch((error) => {
+        initializeThresholdCache();
+    })
+    .catch((error) => {
         console.error("Error clearing threshold: ", error);
         showUpdateMessage('updateMessage3', `Error clearing threshold: ${error.message}`, true);
     });

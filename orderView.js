@@ -183,14 +183,14 @@ async function updateOrderAndAddToInventory(item, receivedQuantity, batchNumber,
                         const partialReceivedAmount = cachedOrders[orderId].status.split(' ')[2];
                         cachedOrders[orderId].status = `Partial Received: ${parseFloat(partialReceivedAmount) + receivedQuantity}`;
                     }
+                    // Use set() with merge to update the orders
+                    await db.collection('orders').doc('orders').set(cachedOrders, { merge: true });
                 }
 
                 if (deleteOrderAfter) {
                     delete cachedOrders[orderId];
+                    await db.collection('orders').doc('orders').set(cachedOrders);
                 }
-
-                // Use set() with merge to update the orders
-                await db.collection('orders').doc('orders').set(cachedOrders, { merge: true });
 
                 initializeOrderCacheAndDropdowns();
             }).catch((error) => {

@@ -24,3 +24,74 @@ async function restoreBackup(backupId) {
     }
 }
 
+async function renameMaterialName(oldName, newName) {
+    try {
+        // === 1. buffer.collection('buffer').doc('buffer') ===
+        const bufferRef = db.collection('buffer').doc('buffer');
+        const bufferSnap = await bufferRef.get();
+        if (bufferSnap.exists && bufferSnap.data()[oldName] !== undefined) {
+            const bufferData = bufferSnap.data();
+            bufferData[newName] = bufferData[oldName];
+            delete bufferData[oldName];
+            await bufferRef.set(bufferData);
+        }
+
+        // === 2. history.collection('history').doc(oldName) ===
+        const oldHistoryRef = db.collection('history').doc(oldName);
+        const newHistoryRef = db.collection('history').doc(newName);
+        const oldHistorySnap = await oldHistoryRef.get();
+        if (oldHistorySnap.exists) {
+            await newHistoryRef.set(oldHistorySnap.data());
+            await oldHistoryRef.delete();
+        }
+
+        // === 3. materials.collection('materials').doc('materials') ===
+        const materialsRef = db.collection('materials').doc('materials');
+        const materialsSnap = await materialsRef.get();
+        if (materialsSnap.exists && materialsSnap.data()[oldName] !== undefined) {
+            const materialsData = materialsSnap.data();
+            materialsData[newName] = materialsData[oldName];
+            delete materialsData[oldName];
+            await materialsRef.set(materialsData);
+        }
+
+        // === 4. orders.collection('orders').doc('orders') ===
+        const ordersRef = db.collection('orders').doc('orders');
+        const ordersSnap = await ordersRef.get();
+        if (ordersSnap.exists) {
+            const ordersData = ordersSnap.data();
+            for (const orderId in ordersData) {
+                if (ordersData[orderId].materialKey === oldName) {
+                    ordersData[orderId].materialKey = newName;
+                }
+            }
+            await ordersRef.set(ordersData);
+        }
+
+        // === 5. products.collection('products').doc(*) ===
+        const productsSnap = await db.collection('products').get();
+        for (const doc of productsSnap.docs) {
+            const productData = doc.data();
+            if (productData[oldName] !== undefined) {
+                const newProductData = { ...productData };
+                newProductData[newName] = newProductData[oldName];
+                delete newProductData[oldName];
+                await db.collection('products').doc(doc.id).set(newProductData);
+            }
+        }
+
+        // === 6. thresholds.collection('thresholds').doc('thresholds') ===
+        const thresholdsRef = db.collection('thresholds').doc('thresholds');
+        const thresholdsSnap = await thresholdsRef.get();
+        if (thresholdsSnap.exists && thresholdsSnap.data()[oldName] !== undefined) {
+            const thresholdsData = thresholdsSnap.data();
+            thresholdsData[newName] = thresholdsData[oldName];
+            delete thresholdsData[oldName];
+            await thresholdsRef.set(thresholdsData);
+        }
+
+        console.log(`✅ Successfully renamed "${oldName}" to "${newName}" across all relevant collections.`);
+    } catch (error) {
+        console.error(`❌ Error renaming material:`, error);
+    }
+}

@@ -71,7 +71,13 @@
 
         <!-- Material List Section -->
         <div id="materialList" class="section" style="display: none;">
-            <h2>Material List</h2>
+            <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin:0">Material List</h2>
+                <img src="download-button.png" 
+                     alt="Download" 
+                     class="download-button"
+                     onclick="downloadMaterialList()">
+            </div>
             <input type="text" id="searchInput" onkeyup="searchMaterials()" placeholder="Search materials...">
             <div id="tableContainer">
                 <table id="materialListTable">
@@ -116,7 +122,13 @@
         <!-- View and Process Sales Orders Section -->
         <div id="viewSalesOrders" class="section" style="display:none;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="display: inline-block;">Sales Orders</h2>
+                <div style="display: flex; justify-content: flex-start; align-items: center;">
+                    <h2 style="margin:0">Sales Orders</h2>
+                    <img src="download-button.png" 
+                         alt="Download" 
+                         class="download-button"
+                         onclick="downloadSalesOrders()">
+                </div>
                 <button id="calculateAllSalesOrder" style="display: inline-block; width: 15%; padding: 10px;" onclick="calculateAllSalesOrder()">Calculate Materials</button>
             </div>
    
@@ -328,7 +340,13 @@
 
         <!-- Edit Product Section -->
         <div id="editProduct" class="section" style="display:none;">
-            <h2>Edit Product</h2>
+            <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin:0">Edit Product</h2>
+                <img src="download-button.png" 
+                     alt="Download" 
+                     class="download-button"
+                     onclick="downloadProductDetails()">
+            </div>
             <form id="editProductForm">
                 <label for="editProductSelect">Select Product:</label>
                 <select id="editProductSelect" style="width: 100%;" required onchange="handleEditProductSelection()"></select>
@@ -358,7 +376,13 @@
 
         <!-- Material History Section -->
         <div id="materialHistory" class="section" style="display:none;">
-            <h2>Material History</h2>
+            <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin:0">Material History</h2>
+                <img src="download-button.png" 
+                     alt="Download" 
+                     class="download-button"
+                     onclick="downloadMaterialHistoryAndBatchInfo()">
+            </div>
             <form id="materialHistoryForm">
                 <label for="historyMaterialSelect">Select Material:</label>
                 <select id="historyMaterialSelect" onchange="handleMaterialSelection()">
@@ -386,7 +410,13 @@
 
         <!-- Batch Info Section -->
         <div id="batchInfo" class="section" style="display: none;">
-            <h2>Batch Info</h2>
+            <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin:0">Batch Info</h2>
+                <img src="download-button.png" 
+                     alt="Download" 
+                     class="download-button"
+                     onclick="downloadMaterialHistoryAndBatchInfo()">
+            </div>
             <label for="batchInfoMaterialSelect">Select Material:</label>
             <select id="batchInfoMaterialSelect" onchange="populateBatchInfoTable()">
                 <!-- Options will be dynamically populated -->
@@ -435,7 +465,13 @@
 
         <!-- View and Process Orders Section -->
         <div id="viewOrders" class="section" style="display:none;">
-            <h2>Pending Orders</h2>
+            <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin:0">Purchase Orders</h2>
+                <img src="download-button.png" 
+                     alt="Download" 
+                     class="download-button"
+                     onclick="downloadPurchaseOrders()">
+            </div>
 
             <div id="pendingOrdersTableContainer">
                 <!-- Table to display pending orders -->
@@ -487,6 +523,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="firebaseConfig.js"></script>
     <script src="app.js"></script>
     <script src="loginCheck.js"></script>

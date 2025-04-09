@@ -529,6 +529,12 @@ th {
     overflow-x: hidden;
 }
 
+.download-button {
+    cursor: pointer; 
+    height: 20px; 
+    margin-left: 12px;
+}
+
 @media (max-width: 1250px) {
     .container {
         max-width: 900px;
@@ -592,6 +598,11 @@ th {
     }
     .product-group input {
         width: 60px; /* Set a fixed width for inputs */
+    }
+
+    .download-button {
+        height: 16px; /* Adjust height for smaller screens */
+        margin-left: 8px; /* Adjust margin for smaller screens */
     }
 }
 @media (max-width: 1000px) {
@@ -673,6 +684,11 @@ th {
     }
     .product-group input {
         width: 40px; /* Set a fixed width for inputs */
+    }
+
+    .download-button {
+        height: 14px; /* Adjust height for smaller screens */
+        margin-left: 6px; /* Adjust margin for smaller screens */
     }
 }
 

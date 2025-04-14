@@ -5,6 +5,20 @@ function handleEditProductFormSubmission() {
         confirmAction(`Are you sure you want to save the changes? <span style="color: red; font-weight: bold">This action cannot be undone.</span>`, () => saveEditedProductDetails());
         console.log('Edit product form submitted.');
     });
+
+    document.addEventListener('click', function (event) {
+        const resultDiv = document.getElementById('editSelectedMaterialsContainer');
+        const button = document.getElementById('enlargeEditMaterialContainerBtn');
+        const blurDiv = document.getElementById('blur'); // Optional, if you want to blur the background
+    
+        // Only trigger if enlarged
+        if (resultDiv.style.position === 'fixed') {
+            // Check if the clicked target is outside the resultDiv
+            if (!resultDiv.contains(event.target) && event.target !== button && event.target === blurDiv) {
+                changeEditMaterialContainerDisplay();
+            }
+        }
+    }); 
 }
 
 function handleEditProductSelection() {
@@ -59,7 +73,10 @@ function populateEditProductForm(productData) {
         
         const inputGroup = `
             <div class="material-quantity-group" data-material-id="${materialId}">
-                <label for="materialQuantity_${materialId}">${materialId} Quantity:</label>
+                <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom:5px;">
+                    <label for="materialQuantity_${materialId}" style="margin-right: 10px; margin-bottom:0">${materialId}:</label>
+                    <img src="cancel-button.png" class="remove-material" data-material-id="${materialId}" style="cursor:pointer; width:16px; height:16px;">
+                </div>
                 <input type="number" id="materialQuantity_${materialId}" min="0" step="any" value="${materialData.quantity}" required>
                 <label for="materialConstant_${materialId}">Constant (if any):</label>
                 <input type="number" id="materialConstant_${materialId}" min="0" step="any" value="${materialData.constant}" required style="margin-bottom:20px;">
@@ -67,45 +84,71 @@ function populateEditProductForm(productData) {
         `;
         container.append(inputGroup);
     });
+
+    // Bind remove icon click handlers
+    $('.remove-material').on('click', function () {
+        const materialIdToRemove = $(this).data('material-id');
+
+        // Remove from select2
+        const currentSelection = $('#editProductMaterialSelect').val() || [];
+        const updatedSelection = currentSelection.filter(id => id !== materialIdToRemove);
+;
+        $('#editProductMaterialSelect').val(updatedSelection).trigger('change');
+    });
 }
 
 function handleEditProductMaterialSelection() {
     $('#editProductMaterialSelect').on('change', function () {
+
+        const container = $('#editSelectedMaterialsContainer');
+        const isEnlarged = container.css('position') === 'fixed';
         // Store existing quantities and constants
         const existingQuantities = {};
         $('#editSelectedMaterialsContainer .material-quantity-group').each(function () {
-            const materialId = $(this).attr('data-material-id'); // Extract the material ID
-            const quantity = $(`input[id='materialQuantity_${CSS.escape(materialId)}']`).val(); // Escape special characters in ID
-            const constant = $(`input[id='materialConstant_${CSS.escape(materialId)}']`).val(); // Escape special characters in ID
+            const materialId = $(this).attr('data-material-id');
+            const quantity = $(`input[id='materialQuantity_${CSS.escape(materialId)}']`).val();
+            const constant = $(`input[id='materialConstant_${CSS.escape(materialId)}']`).val();
             existingQuantities[materialId] = {
-                quantity: quantity || 1, // Default to 1 if no value
-                constant: constant || 0  // Default to 0 if no value
+                quantity: quantity || 1,
+                constant: constant || 0
             };
-
-            console.log(existingQuantities[materialId]);
         });
 
-        const selectedMaterials = $(this).val();
-        // Sort the selected materials
+        const selectedMaterials = $(this).val() || [];
         const sortedSelectedMaterials = selectedMaterials.sort();
-
-        const container = $('#editSelectedMaterialsContainer');
-        container.empty(); // Clear previous inputs
-        container.append(`<button type="button" id="enlargeEditMaterialContainerBtn" onclick="changeEditMaterialContainerDisplay()">Enlarge</button>`);
-
+        container.empty();
+        if (isEnlarged){
+            container.append(`<button type="button" id="enlargeEditMaterialContainerBtn" onclick="changeEditMaterialContainerDisplay()">Minimize</button>`);
+        }
+        else{
+            container.append(`<button type="button" id="enlargeEditMaterialContainerBtn" onclick="changeEditMaterialContainerDisplay()">Enlarge</button>`);
+        }
+        
         sortedSelectedMaterials.forEach(materialId => {
-            // Retrieve saved values or default to {quantity: 1, constant: 0} if not present
-            const materialData = existingQuantities[materialId] || { quantity: 1, constant: 0 }; 
-            
+            const materialData = existingQuantities[materialId] || { quantity: 1, constant: 0 };
+
             const inputGroup = `
             <div class="material-quantity-group" data-material-id="${materialId}">
-                <label for="materialQuantity_${materialId}">${materialId} Quantity:</label>
+                <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom:5px;">
+                    <label for="materialQuantity_${materialId}" style="margin-right: 10px; margin-bottom:0">${materialId}:</label>
+                    <img src="cancel-button.png" class="remove-material" data-material-id="${materialId}" style="cursor:pointer; width:16px; height:16px;">
+                </div>
                 <input type="number" id="materialQuantity_${materialId}" min="0" step="any" value="${materialData.quantity}" required>
                 <label for="materialConstant_${materialId}">Constant (if any):</label>
                 <input type="number" id="materialConstant_${materialId}" min="0" step="any" value="${materialData.constant}" required style="margin-bottom:20px;">
             </div>
             `;
             container.append(inputGroup);
+        });
+        
+        // Bind remove icon click handlers
+        $('.remove-material').on('click', function () {
+            const materialIdToRemove = $(this).data('material-id');
+            
+            // Remove from select2
+            const currentSelection = $('#editProductMaterialSelect').val() || [];
+            const updatedSelection = currentSelection.filter(id => id !== materialIdToRemove);
+            $('#editProductMaterialSelect').val(updatedSelection).trigger('change');
         });
     });
 }

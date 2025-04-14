@@ -5,6 +5,18 @@ function handleMaterialCheckFormSubmission() {
         checkMaterials();
     });
     $('#productSelect').on('change', updateProductInputs);
+    document.addEventListener('click', function (event) {
+        const resultDiv = document.getElementById('result');
+        const button = document.getElementById('enlargeBtn');
+    
+        // Only trigger if enlarged
+        if (resultDiv.style.position === 'fixed') {
+            // Check if the clicked target is outside the resultDiv
+            if (!resultDiv.contains(event.target) && event.target !== button) {
+                changeDisplay();
+            }
+        }
+    });    
 }
 
 // Function to fetch product details from the database
@@ -31,7 +43,7 @@ function updateProductInputs() {
     // Preserve existing inputs and their values
     const existingInputs = {};
     Array.from(container.children).forEach(child => {
-        const productId = child.dataset.productId; // Retrieve product ID from data attribute
+        const productId = child.dataset.productId;
         existingInputs[productId] = {
             element: child,
             values: {
@@ -51,7 +63,6 @@ function updateProductInputs() {
         const productName = option.text;
 
         if (existingInputs[productId]) {
-            // Reuse existing input group and restore values
             const existingGroup = existingInputs[productId].element;
             const values = existingInputs[productId].values;
 
@@ -61,22 +72,43 @@ function updateProductInputs() {
 
             container.appendChild(existingGroup);
         } else {
-            // Create a new input group for new products
             const productGroup = document.createElement('div');
             productGroup.classList.add('product-group');
-            productGroup.dataset.productId = productId; // Store product ID for easy lookup
+            productGroup.dataset.productId = productId;
+
             productGroup.innerHTML = `
-                <span id="product-row-${productName}">${productName}</span>
+                <div class="product-header">
+                    <span id="product-row-${productName}">${productName}</span>
+                    <img class="remove-product" src="cancel-button.png""></img>
+                </div>
                 
                 <label for="quantity-${productId}">Qty:</label>
                 <input type="number" id="quantity-${productId}" class="quantity-input" placeholder="1" step="any" required>
                 
                 <label for="days-${productId}">Days:</label>
                 <input type="number" id="days-${productId}" class="days-input" placeholder="1" step="any" required>
-    
+
                 <label for="buffer-${productId}">Buffer:</label>
                 <input type="number" id="buffer-${productId}" class="buffer-input" placeholder="%" step="any" required>
             `;
+
+            // Add event listener to remove button
+            productGroup.querySelector('.remove-product').addEventListener('click', () => {
+                // Remove the product input group
+                productGroup.remove();
+
+                // Deselect the option using jQuery + Select2
+                const $productSelect = $('#productSelect');
+                const selectedValues = $productSelect.val() || [];
+                const updatedValues = selectedValues.filter(value => value !== productId);
+
+                // Update the select2 value and trigger change
+                $productSelect.val(updatedValues).trigger('change');
+
+                // Trigger update to re-sync the inputs
+                updateProductInputs();
+            });
+
             container.appendChild(productGroup);
         }
     });
@@ -302,4 +334,21 @@ async function saveDaysToDB(numberOfDays) {
     } catch (error) {
         console.error('Error saving Number of days to Firestore:', error);
     }
+}
+
+function clearAllItems(){
+    const productSelect = document.getElementById('productSelect');
+    const container = document.getElementById('productInputsContainer');
+    const resultDiv = document.getElementById('result');
+
+    // Clear the selected options in the product select
+    productSelect.selectedIndex = -1;
+    $(productSelect).val(null).trigger('change'); // Reset Select2
+
+    // Clear the container for product inputs
+    container.innerHTML = '';
+
+    // Clear the result div
+    resultDiv.innerHTML = '';
+    resultDiv.style.display = 'none';
 }

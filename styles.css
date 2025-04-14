@@ -204,6 +204,14 @@ button:hover {
     background-color: #c82333; /* Darker red */
 }
 
+#clearAllButton{
+    background-color: #dc3545; /* Red */
+}
+
+#clearAllButton:hover {
+    background-color: #c82333; /* Darker red */
+}
+
 #deleteSalesOrderButton {
     background-color: #dc3545; /* Red */
 }
@@ -229,13 +237,25 @@ button:hover {
     border-bottom: 1px solid #d3d0d0; /* Optional: Divider between rows */
 }
 
-.product-group span {
+.product-header {
+    display: flex; /* Arrange items in a row */
+    align-items: center; /* Vertically align labels and inputs */
+    justify-content: space-between; /* Space out items horizontally */
+    width: 30%;
+}
+
+.product-header span {
     font-size: 1.0rem; /* Adjust font size of the product name */
     margin: 0; /* Remove default margins */
-    width: 30%; /* Limit the width of the product name */
+    width: 90%; /* Limit the width of the product name */
     overflow: hidden; /* Hide overflowing text */
     text-overflow: ellipsis; /* Show ellipsis for overflowing text */
     white-space: wrap; /* Prevent text wrapping */
+}
+
+.product-header img{
+    height:20px; 
+    cursor:pointer;
 }
 
 .product-group label {
@@ -600,6 +620,10 @@ th {
         width: 60px; /* Set a fixed width for inputs */
     }
 
+    .product-header img{
+        height:15px; 
+    }
+
     .download-button {
         height: 16px; /* Adjust height for smaller screens */
         margin-left: 8px; /* Adjust margin for smaller screens */
@@ -675,6 +699,7 @@ th {
     .select2-container--default .select2-selection--multiple, select, input{
         max-height: 30px;
     }
+
     .product-group span{
         font-size: 10px;
     }
@@ -684,6 +709,10 @@ th {
     }
     .product-group input {
         width: 40px; /* Set a fixed width for inputs */
+    }
+
+    .product-header img{
+        height:12px; 
     }
 
     .download-button {

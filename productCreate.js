@@ -15,20 +15,40 @@ function handleCreateProductMaterialSelection() {
 
         const selectedMaterials = $(this).val();
         const container = $('#selectedMaterialsContainer');
+        const isEnlarged = container.css('position') === 'fixed'; // Check if the container is enlarged
         container.empty(); // Clear previous inputs
-        container.append(`<button type=button id="enlargeMaterialContainerBtn" onclick="changeMaterialContainerDisplay()">Enlarge</button>`);
+        if (isEnlarged){
+            container.append(`<button type=button id="enlargeMaterialContainerBtn" onclick="changeMaterialContainerDisplay()">Minimize</button>`);
+        }
+        else{
+            container.append(`<button type=button id="enlargeMaterialContainerBtn" onclick="changeMaterialContainerDisplay()">Enlarge</button>`);
+        }
+        
 
         selectedMaterials.forEach(materialId => {
             const materialData = existingQuantities[materialId] || { quantity: 1, constant: 0 }; // Default if no existing data
             const inputGroup = `
                 <div class="material-quantity-group" data-material-id="${materialId}">
-                    <label for="materialQuantity_${materialId}">${materialId} Quantity:</label>
+                    <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom:5px;">
+                        <label for="materialQuantity_${materialId}" style="margin-right: 10px; margin-bottom:0">${materialId}:</label>
+                        <img src="cancel-button.png" class="remove-material" data-material-id="${materialId}" style="cursor:pointer; width:16px; height:16px;">
+                    </div>
                     <input type="number" id="materialQuantity_${materialId}" min="0" step="any" value="${materialData.quantity}" required>
                     <label for="materialConstant_${materialId}">Constant (if any):</label>
                     <input type="number" id="materialConstant_${materialId}" min="0" step="any" value="${materialData.constant}" required style="margin-bottom:20px;">
                 </div>
             `;
             container.append(inputGroup);
+        });
+
+        // Bind remove icon click handlers
+        $('.remove-material').on('click', function () {
+            const materialIdToRemove = $(this).data('material-id');
+            
+            // Remove from select2
+            const currentSelection = $('#createProductMaterialSelect').val() || [];
+            const updatedSelection = currentSelection.filter(id => id !== materialIdToRemove);
+            $('#createProductMaterialSelect').val(updatedSelection).trigger('change');
         });
     });
 }
@@ -41,6 +61,20 @@ function handleCreateProductFormSubmission() {
         confirmAction('Are you sure you want to create this product?', () => saveProductDetailsintoDB());
         console.log('Product creation form submitted.');
     });
+
+    document.addEventListener('click', function (event) {
+        const resultDiv = document.getElementById('selectedMaterialsContainer');
+        const button = document.getElementById('enlargeMaterialContainerBtn');
+        const blurDiv = document.getElementById('blur'); // Optional, if you want to blur the background
+    
+        // Only trigger if enlarged
+        if (resultDiv.style.position === 'fixed') {
+            // Check if the clicked target is outside the resultDiv
+            if (!resultDiv.contains(event.target) && event.target !== button && event.target === blurDiv) {
+                changeMaterialContainerDisplay();
+            }
+        }
+    }); 
 }
 
 // Function to save product details

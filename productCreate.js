@@ -154,7 +154,7 @@ function changeMaterialContainerDisplay() {
         container.style.zIndex = '';
         container.style.backgroundColor = '';
         container.style.transform = 'translate(0,0)';
-        container.style.maxHeight = '100px'; // Restore original height
+        container.style.maxHeight = '70px'; // Restore original height
         container.style.padding = '20px'; // Restore original padding
         container.style.marginTop = '10px';
         button.innerText = 'Enlarge';

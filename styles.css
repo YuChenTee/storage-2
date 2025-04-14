@@ -289,7 +289,7 @@ button:hover {
     margin-top: 20px;
     font-size: 16px;
     color: #333;
-    max-height: 220px; /* Set the maximum height */
+    max-height: 140px; /* Set the maximum height */
     overflow-y: auto; /* Enable vertical scrolling */
     border: 1px solid #ccc; /* Add a border */
     padding-left: 10px; /* Add some padding inside the border */
@@ -528,7 +528,19 @@ th {
     border: 1px solid #ccc;
 }
 
-#selectedMaterialsContainer, #editSelectedMaterialsContainer{
+#selectedMaterialsContainer{
+    position: relative;
+    height: 70px;
+    max-height: 70px;
+    overflow-y: auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+#editSelectedMaterialsContainer{
     position: relative;
     height: 100px;
     max-height: 100px;

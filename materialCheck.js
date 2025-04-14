@@ -270,7 +270,7 @@ function changeDisplay() {
         resultDiv.style.zIndex = '';
         resultDiv.style.backgroundColor = '';
         resultDiv.style.transform = 'translate(0,0)';
-        resultDiv.style.maxHeight = '220px'; // Restore original padding
+        resultDiv.style.maxHeight = '140px'; // Restore original padding
         resultDiv.style.padding = '10px'; // Restore original padding
         resultDiv.style.marginTop = '10px'; 
         button.innerText = 'Enlarge';

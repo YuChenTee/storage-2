@@ -71,14 +71,16 @@
 
         <!-- Material List Section -->
         <div id="materialList" class="section" style="display: none;">
-            <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin:0">Material List</h2>
-                <img src="download-button.png" 
-                     alt="Download" 
-                     class="download-button"
-                     onclick="downloadMaterialList()">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; justify-content: flex-start; align-items: center;">
+                    <h2 style="margin:0">Material List</h2>
+                    <img src="download-button.png" 
+                         alt="Download" 
+                         class="download-button"
+                         onclick="downloadMaterialList()">
+                </div>
+                <input type="text" id="searchInput" onkeyup="searchTable('searchInput','materialListTable')" placeholder="Search materials..." style="margin:0;width:auto;">
             </div>
-            <input type="text" id="searchInput" onkeyup="searchMaterials()" placeholder="Search materials...">
             <div id="tableContainer">
                 <table id="materialListTable">
                     <thead>
@@ -131,7 +133,10 @@
                          class="download-button"
                          onclick="downloadSalesOrders()">
                 </div>
-                <button id="calculateAllSalesOrder" style="display: inline-block; width: 15%; padding: 10px;" onclick="calculateAllSalesOrder()">Calculate Materials</button>
+                <div style="display: flex; justify-content: flex-end; align-items: center;">
+                    <input type="text" id="searchSalesOrderInput" onkeyup="searchTable('searchSalesOrderInput','pendingSalesOrdersTable')" placeholder="Search sales orders..." style="margin:0;width:auto;margin-right:10px;">
+                    <button id="calculateAllSalesOrder" style="display: inline-block; width: auto; padding-left: 12px; padding-right: 12px;" onclick="calculateAllSalesOrder()">Calculate Materials</button>
+                </div>
             </div>
    
             <div id="pendingSalesOrdersTableContainer">
@@ -467,12 +472,15 @@
 
         <!-- View and Process Orders Section -->
         <div id="viewOrders" class="section" style="display:none;">
-            <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin:0">Purchase Orders</h2>
-                <img src="download-button.png" 
-                     alt="Download" 
-                     class="download-button"
-                     onclick="downloadPurchaseOrders()">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; justify-content: flex-start; align-items: center;">
+                    <h2 style="margin:0">Purchase Orders</h2>
+                    <img src="download-button.png" 
+                         alt="Download" 
+                         class="download-button"
+                         onclick="downloadPurchaseOrders()">
+                </div>
+            <input type="text" id="searchOrderInput" onkeyup="searchTable('searchOrderInput','pendingOrdersTable')" placeholder="Search purchase orders..." style="margin:0;width:auto;">
             </div>
 
             <div id="pendingOrdersTableContainer">

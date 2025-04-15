@@ -80,29 +80,6 @@ function populateMaterialList() {
     });
 }
 
-// Function to search materials
-function searchMaterials() {
-    const input = document.getElementById('searchInput');
-    const filter = input.value.toLowerCase();
-    const table = document.getElementById('materialListTable');
-    const tr = table.getElementsByTagName('tr');
-
-    for (let i = 1; i < tr.length; i++) {
-        let match = false;
-        const td = tr[i].getElementsByTagName('td');
-        for (let j = 0; j < td.length; j++) {
-            if (td[j]) {
-                const txtValue = td[j].textContent || td[j].innerText;
-                if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                    match = true;
-                    break;
-                }
-            }
-        }
-        tr[i].style.display = match ? "" : "none";
-    }
-}
-
 //shortcut to view batch info of a selected material
 function viewBatchInfo(material){
     $('#batchInfoMaterialSelect').val(material).trigger('change');

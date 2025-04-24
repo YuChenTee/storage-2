@@ -156,14 +156,29 @@ async function deleteSalesOrder(orderId) {
         return;
     }
 
-    delete cachedSalesOrders[orderId];
+    const salesOrderDocRef = db.collection('salesOrder').doc('salesOrder');
 
     try {
-        // Update Firestore
-        await db.collection('salesOrder').doc('salesOrder').set(cachedSalesOrders);
-        showUpdateMessage('updateMessage10', `Sales Order ${orderId} successfully deleted.`);
+        await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(salesOrderDocRef);
+            if (!doc.exists) {
+                throw new Error('Sales orders document does not exist.');
+            }
 
-        initializeSalesOrderCacheAndDropdowns();
+            const salesOrders = doc.data();
+
+            if (!salesOrders[orderId]) {
+                throw new Error(`Sales Order ${orderId} does not exist.`);
+            }
+
+            delete salesOrders[orderId];
+
+            transaction.set(salesOrderDocRef, salesOrders);
+        });
+
+        delete cachedSalesOrders[orderId]; // Reflect change in local cache
+        showUpdateMessage('updateMessage10', `Sales Order ${orderId} successfully deleted.`);
+        initializeSalesOrderCacheAndDropdowns(); // Refresh UI/cache
     } catch (error) {
         console.error("Error deleting sales order: ", error);
         showUpdateMessage('updateMessage10', `Error deleting sales order: ${error.message}`, true);

@@ -29,9 +29,6 @@ function handleAddSalesOrderFormSubmission() {
 
 // Function to add the sales order to the Firestore database
 function addSalesOrderToDB(salesOrderId, selectedProducts, salesOrderQuantities, expectedDeliveryDate, orderDate) {
-    console.log(`Adding sales order ${salesOrderId} with products to the database...`);
-
-    // Create a sales order entry with all selected products and their quantities
     const salesOrderEntry = {
         salesOrderId: salesOrderId,
         products: selectedProducts.map((product, index) => ({
@@ -43,26 +40,24 @@ function addSalesOrderToDB(salesOrderId, selectedProducts, salesOrderQuantities,
         status: 'Pending'
     };
 
-    // Fetch the current sales orders from the database
-    db.collection('salesOrder').doc('salesOrder').get().then((doc) => {
+    const salesOrderDocRef = db.collection('salesOrder').doc('salesOrder');
+
+    db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(salesOrderDocRef);
         let salesOrders = doc.exists ? doc.data() : {};
 
-        // Add the new sales order to the sales orders map
+        if (salesOrders[salesOrderId]) {
+            throw new Error(`Sales Order ID ${salesOrderId} already exists.`);
+        }
+
         salesOrders[salesOrderId] = salesOrderEntry;
-
-        // Update the salesOrder document in the database
-        db.collection('salesOrder').doc('salesOrder').set(salesOrders).then(() => {
-            console.log(`Successfully added sales order: ${salesOrderId}`);
-            showUpdateMessage('updateMessage9', `Successfully added sales order: ${salesOrderId}.`);
-
-            initializeSalesOrderCacheAndDropdowns(); // Refresh the cached sales orders and dropdowns
-
-        }).catch((error) => {
-            console.error(`Error adding sales order: ${error}`);
-            showUpdateMessage('updateMessage9', `Error adding sales order: ${error.message}`, true);
-        });
+        transaction.set(salesOrderDocRef, salesOrders);
+    }).then(() => {
+        console.log(`Successfully added sales order: ${salesOrderId}`);
+        showUpdateMessage('updateMessage9', `Successfully added sales order: ${salesOrderId}.`);
+        initializeSalesOrderCacheAndDropdowns();
     }).catch((error) => {
-        console.error(`Error fetching sales orders: ${error}`);
-        showUpdateMessage('updateMessage9', `Error fetching sales orders: ${error.message}`, true);
+        console.error(`Transaction failed: ${error}`);
+        showUpdateMessage('updateMessage9', error.message, true);
     });
 }

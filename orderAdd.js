@@ -26,7 +26,8 @@ function handleAddPendingMaterialFormSubmission() {
 function addPendingMaterialToDB(orderID, materialKey, orderedQuantity, orderDate, expectedArrivalDate) {
     console.log(`Adding pending order for ${materialKey} to the database...`);
 
-    // Create an order entry
+    const ordersDocRef = db.collection('orders').doc('orders');
+
     const orderEntry = {
         orderID: orderID,
         materialKey: materialKey,
@@ -36,27 +37,26 @@ function addPendingMaterialToDB(orderID, materialKey, orderedQuantity, orderDate
         status: 'Pending'
     };
 
-    // Fetch the current orders from the database
-    db.collection('orders').doc('orders').get().then((doc) => {
-        let orders = doc.exists ? doc.data() : {};
+    db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(ordersDocRef);
+        const orders = doc.exists ? doc.data() : {};
 
-        // Add the new order to the orders map
+        if (orders[orderID]) {
+            throw new Error(`Order ID ${orderID} already exists.`);
+        }
+
         orders[orderID] = orderEntry;
 
-        // Update the orders document in the database
-        db.collection('orders').doc('orders').set(orders).then(() => {
-            console.log(`Successfully added pending order: ${orderID}`);
-            showUpdateMessage('updateMessage6', `Successfully added pending order for material: ${materialKey}.`);
+        transaction.set(ordersDocRef, orders);
+    }).then(() => {
+        console.log(`Successfully added pending order: ${orderID}`);
+        showUpdateMessage('updateMessage6', `Successfully added pending order for material: ${materialKey}.`);
 
-            initializeOrderCacheAndDropdowns(); // Refresh the cached orders and dropdowns
+        initializeOrderCacheAndDropdowns(); // Refresh the cached orders and dropdowns
 
-            // You may also want to refresh the pending materials list here
-        }).catch((error) => {
-            console.error(`Error adding pending order: ${error}`);
-            showUpdateMessage('updateMessage6', `Error adding pending order: ${error.message}`, true);
-        });
+        // You may also want to refresh the pending materials list here
     }).catch((error) => {
-        console.error(`Error fetching orders: ${error}`);
-        showUpdateMessage('updateMessage6', `Error fetching orders: ${error.message}`, true);
+        console.error(`Error adding pending order: ${error}`);
+        showUpdateMessage('updateMessage6', `Error adding pending order: ${error.message}`, true);
     });
 }

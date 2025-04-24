@@ -134,7 +134,10 @@ async function updateOrderAndAddToInventory(item, receivedQuantity, batchNumber,
 
     console.log(`Adding ${receivedQuantity} of ${item} (Batch: ${batchNumber}, Expiry: ${expiryDate}) to the database...`);
 
-    // Check the cache first
+    const materialRef = db.collection('materials').doc('materials');
+    const historyRef = db.collection('history').doc(item);
+    const ordersRef = db.collection('orders').doc('orders');
+
     let history = cachedMaterialHistory[item];
     if (!history) {
         history = await fetchMaterialHistoryFromDB(item);
@@ -144,67 +147,61 @@ async function updateOrderAndAddToInventory(item, receivedQuantity, batchNumber,
         }
     }
 
-    const materialRef = db.collection('materials').doc('materials');
-    const historyRef = db.collection('history').doc(item);
+    try {
+        await db.runTransaction(async (transaction) => {
+            const materialDoc = await transaction.get(materialRef);
+            const ordersDoc = await transaction.get(ordersRef);
 
-    materialRef.get().then((doc) => {
-        if (doc.exists) {
-            const materials = doc.data();
+            const materials = materialDoc.exists ? materialDoc.data() : {};
+            const orders = ordersDoc.exists ? ordersDoc.data() : {};
+
             const currentQuantity = materials[item] || 0;
 
-            const batch = db.batch();
-
-            // Use set() with merge to increment the quantity instead of update()
-            batch.set(materialRef, {
-                [item]: firebase.firestore.FieldValue.increment(receivedQuantity)
+            // Update materials quantity
+            const newQuantity = currentQuantity + receivedQuantity;
+            transaction.set(materialRef, {
+                [item]: newQuantity
             }, { merge: true });
 
-            batch.set(historyRef, {
+            // Add new history record
+            transaction.set(historyRef, {
                 [datetime]: {
-                    datetime: datetime,
+                    datetime,
                     in: receivedQuantity,
                     out: 0,
-                    balance: currentQuantity + receivedQuantity,
+                    balance: newQuantity,
                     batchNo: batchNumber,
                     expiryDate: expiryDate
                 }
             }, { merge: true });
 
-            batch.commit().then(async () => {
-                console.log(`Successfully added ${receivedQuantity} of ${item}.`);
-                initializeMaterialCacheAndDropdowns();
-                await fetchMaterialHistoryFromDB(item); // Update the cache after adding
-                showUpdateMessage('updateMessage7', `Successfully added ${receivedQuantity} of ${item} (Batch: ${batchNumber}, Expiry: ${expiryDate}).`);
-
+            // Update order
+            if (orders[orderId]) {
                 if (!deleteOrderAfter) {
-                    if (cachedOrders[orderId].status === 'Pending') {
-                        cachedOrders[orderId].status = `Partial Received: ${receivedQuantity}`;
+                    let status = orders[orderId].status;
+                    if (status === 'Pending') {
+                        orders[orderId].status = `Partial Received: ${receivedQuantity}`;
                     } else {
-                        const partialReceivedAmount = cachedOrders[orderId].status.split(' ')[2];
-                        cachedOrders[orderId].status = `Partial Received: ${parseFloat(partialReceivedAmount) + receivedQuantity}`;
+                        const partialReceivedAmount = parseFloat(status.split(' ')[2]);
+                        orders[orderId].status = `Partial Received: ${partialReceivedAmount + receivedQuantity}`;
                     }
-                    // Use set() with merge to update the orders
-                    await db.collection('orders').doc('orders').set(cachedOrders, { merge: true });
+                } else {
+                    delete orders[orderId];
                 }
+                transaction.set(ordersRef, orders);
+            }
+        });
 
-                if (deleteOrderAfter) {
-                    delete cachedOrders[orderId];
-                    await db.collection('orders').doc('orders').set(cachedOrders);
-                }
+        console.log(`Successfully added ${receivedQuantity} of ${item}.`);
+        initializeMaterialCacheAndDropdowns();
+        await fetchMaterialHistoryFromDB(item); // Refresh cache
+        initializeOrderCacheAndDropdowns();
 
-                initializeOrderCacheAndDropdowns();
-            }).catch((error) => {
-                console.error("Error adding item: ", error);
-                showUpdateMessage('updateMessage7', `Error adding ${item}: ${error.message}`, true);
-            });
-        } else {
-            console.error("Material document not found.");
-            showUpdateMessage('updateMessage7', "Material document not found.", true);
-        }
-    }).catch((error) => {
-        console.error("Error fetching material quantity: ", error);
-        showUpdateMessage('updateMessage7', `Error fetching material quantity: ${error.message}`, true);
-    });
+        showUpdateMessage('updateMessage7', `Successfully added ${receivedQuantity} of ${item} (Batch: ${batchNumber}, Expiry: ${expiryDate}).`);
+    } catch (error) {
+        console.error("Error in transaction: ", error);
+        showUpdateMessage('updateMessage7', `Error adding ${item}: ${error.message}`, true);
+    }
 }
 
 
@@ -214,16 +211,33 @@ async function deleteOrder(orderId) {
         return;
     }
 
-    // Remove the order from cachedOrders
-    delete cachedOrders[orderId];
-
     try {
-        // Update Firestore
-        await db.collection('orders').doc('orders').set(cachedOrders);
-        showUpdateMessage('updateMessage7', `Order ${orderId} successfully deleted.`);
+        await db.runTransaction(async (transaction) => {
+            const ordersRef = db.collection('orders').doc('orders');
+            const ordersDoc = await transaction.get(ordersRef);
 
-        // Refresh the orders table and dropdown
+            if (!ordersDoc.exists) {
+                throw new Error('Orders document does not exist.');
+            }
+
+            const orders = ordersDoc.data();
+
+            if (!orders[orderId]) {
+                throw new Error(`Order ${orderId} not found.`);
+            }
+
+            // Remove the specified order
+            delete orders[orderId];
+
+            // Commit the updated orders
+            transaction.set(ordersRef, orders);
+        });
+
+        // Also update the local cache and UI
+        delete cachedOrders[orderId];
         initializeOrderCacheAndDropdowns();
+
+        showUpdateMessage('updateMessage7', `Order ${orderId} successfully deleted.`);
     } catch (error) {
         console.error("Error deleting order: ", error);
         showUpdateMessage('updateMessage7', `Error deleting order: ${error.message}`, true);

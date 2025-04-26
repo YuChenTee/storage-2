@@ -27,36 +27,35 @@ function handleCreateMaterialFormSubmission() {
 }
 
 // Function to create a new material
-function createMaterial(key) {
+async function createMaterial(key) {
     console.log(`Creating new material: ${key} with quantity 0...`);
 
-    db.collection('materials').doc('materials').get().then((doc) => {
-        const materials = doc.exists ? doc.data() : {};
+    try {
+        await db.runTransaction(async (transaction) => {
+            const materialRef = db.collection('materials').doc('materials');
+            const historyRef = db.collection('history').doc(key);
 
-        // Update materials document using set() with merge
-        const updatedMaterials = {
-            ...materials,
-            [key]: 0
-        };
+            const materialDoc = await transaction.get(materialRef);
+            const materials = materialDoc.exists ? materialDoc.data() : {};
 
-        db.collection('materials').doc('materials').set(updatedMaterials, { merge: true }).then(() => {
-            console.log(`Successfully created new material: ${key}`);
-            initializeMaterialCacheAndDropdowns(); // Refresh material dropdown
-            showUpdateMessage('updateMessage2', `Successfully created new material: ${key}.`);
-        }).catch((error) => {
-            console.error(`Error creating new material: ${error}`);
-            showUpdateMessage('updateMessage2', `Error creating new material: ${error.message}`, true);
+            if (materials.hasOwnProperty(key)) {
+                throw new Error(`Material '${key}' already exists.`);
+            }
+
+            // Set the new material with quantity 0
+            transaction.set(materialRef, {
+                [key]: 0
+            }, { merge: true });
+
+            // Set an empty history object for the material
+            transaction.set(historyRef, {});
         });
 
-        // Create an empty history document for the material
-        db.collection('history').doc(key).set({}).then(() => {
-            console.log(`Created empty history document for material: ${key}`);
-        }).catch((error) => {
-            console.error(`Error creating history document: ${error}`);
-            showUpdateMessage('updateMessage2', `Error creating history document: ${error.message}`, true);
-        });
-    }).catch((error) => {
-        console.error(`Error fetching materials: ${error}`);
-        showUpdateMessage('updateMessage2', `Error fetching materials: ${error.message}`, true);
-    });
+        console.log(`Successfully created new material: ${key}`);
+        initializeMaterialCacheAndDropdowns(); // Refresh dropdown
+        showUpdateMessage('updateMessage2', `Successfully created new material: ${key}.`);
+    } catch (error) {
+        console.error(`Error creating new material: ${error}`);
+        showUpdateMessage('updateMessage2', `Error creating new material: ${error.message}`, true);
+    }
 }

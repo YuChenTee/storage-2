@@ -123,59 +123,55 @@ async function addMaterial(item, quantity, batchNumber, expiryDate) {
 
     console.log(`Adding ${quantity} of ${item} (Batch: ${batchNumber}, Expiry: ${expiryDate}) to the database...`);
 
-    // Check the cache first
-    let history = cachedMaterialHistory[item];
-    if (!history) {
-        // If not in cache, fetch from database
-        history = await fetchMaterialHistoryFromDB(item);
+    try {
+        // Check and update the cache
+        let history = cachedMaterialHistory[item];
         if (!history) {
-            showUpdateMessage('updateMessage', `No history found for ${item}.`, true);
-            return;
-        }
-    }
-
-    // Firestore references
-    const materialRef = db.collection('materials').doc('materials');
-    const historyRef = db.collection('history').doc(item);
-
-    materialRef.get().then((doc) => {
-        const currentQuantity = doc.exists && doc.data()[item] ? doc.data()[item] : 0;
-
-        const batch = db.batch();
-
-        // Use set() with merge: true to update quantity
-        batch.set(materialRef, {
-            [item]: firebase.firestore.FieldValue.increment(quantity)
-        }, { merge: true });
-
-        // Add history entry
-        batch.set(historyRef, {
-            [datetime]: {
-                datetime: datetime,
-                in: quantity,
-                out: 0,
-                balance: currentQuantity + quantity,
-                batchNo: batchNumber,
-                expiryDate: expiryDate
+            history = await fetchMaterialHistoryFromDB(item);
+            if (!history) {
+                showUpdateMessage('updateMessage', `No history found for ${item}.`, true);
+                return;
             }
-        }, { merge: true });
+        }
 
-        batch.commit().then(async () => {
-            console.log(`Successfully added ${quantity} of ${item}.`);
-            initializeMaterialCacheAndDropdowns();
-            await fetchMaterialHistoryFromDB(item); // Update the cache after adding
-            showUpdateMessage('updateMessage', `Successfully added ${quantity} of ${item} (Batch: ${batchNumber}, Expiry: ${expiryDate}).`);
-        }).catch((error) => {
-            console.error("Error adding item: ", error);
-            showUpdateMessage('updateMessage', `Error adding ${item}: ${error.message}`, true);
+        const materialRef = db.collection('materials').doc('materials');
+        const historyRef = db.collection('history').doc(item);
+
+        await db.runTransaction(async (transaction) => {
+            const materialDoc = await transaction.get(materialRef);
+            const materials = materialDoc.exists ? materialDoc.data() : {};
+            const currentQuantity = materials[item] || 0;
+
+            // Increment the quantity
+            transaction.set(materialRef, {
+                [item]: firebase.firestore.FieldValue.increment(quantity)
+            }, { merge: true });
+
+            // Append to history
+            transaction.set(historyRef, {
+                [datetime]: {
+                    datetime: datetime,
+                    in: quantity,
+                    out: 0,
+                    balance: currentQuantity + quantity,
+                    batchNo: batchNumber,
+                    expiryDate: expiryDate
+                }
+            }, { merge: true });
         });
-    }).catch((error) => {
-        console.error("Error fetching material quantity: ", error);
-        showUpdateMessage('updateMessage', `Error fetching material quantity: ${error.message}`, true);
-    });
+
+        console.log(`Successfully added ${quantity} of ${item}.`);
+        initializeMaterialCacheAndDropdowns();
+        await fetchMaterialHistoryFromDB(item); // Refresh cache
+        showUpdateMessage('updateMessage', `Successfully added ${quantity} of ${item} (Batch: ${batchNumber}, Expiry: ${expiryDate}).`);
+
+    } catch (error) {
+        console.error("Error adding item: ", error);
+        showUpdateMessage('updateMessage', `Error adding ${item}: ${error.message}`, true);
+    }
 }
 
-async function deductMaterial(item, quantity, productOrMaterial='material') {
+async function deductMaterial(item, quantity, productOrMaterial = 'material') {
     if (quantity <= 0 || !quantity) {
         showUpdateMessage('updateMessage', 'Please enter a valid quantity.', true);
         return;
@@ -189,58 +185,59 @@ async function deductMaterial(item, quantity, productOrMaterial='material') {
         return;
     }
 
-    let remainingQuantity = quantity;
-    let deductions = [];
+    // Parse history to calculate balances
     let latestBalance = 0;
     let batchBalances = {};
-    let historyUpdates = {};
 
-    Object.entries(history).forEach(([key, entry]) => {
+    for (const entry of Object.values(history)) {
         const batchNo = entry.batchNo;
         batchBalances[batchNo] = (batchBalances[batchNo] || 0) + (entry.in - entry.out);
         latestBalance += entry.in - entry.out;
-    });
+    }
 
     if (latestBalance < quantity) {
         showUpdateMessage('updateMessage', `Insufficient total quantity of ${item}.`, true);
         return;
     }
 
-    let selectedBatch = productOrMaterial === 'product' 
-        ? document.getElementById(`batchSelect_${item}`).value 
+    const selectedBatch = productOrMaterial === 'product'
+        ? document.getElementById(`batchSelect_${item}`).value
         : document.getElementById('batchSelect').value;
 
     let batches = selectedBatch === 'default'
         ? Object.entries(history).sort((a, b) => new Date(a[1].expiryDate) - new Date(b[1].expiryDate))
-        : Object.entries(history).filter(([key, entry]) => entry.batchNo === selectedBatch);
+        : Object.entries(history).filter(([_, entry]) => entry.batchNo === selectedBatch);
 
-    const dbBatch = db.batch();
-    const materialRef = db.collection('materials').doc('materials');
+    let remainingQuantity = quantity;
+    const deductions = [];
+    const historyUpdates = {};
 
-    dbBatch.set(materialRef, {
-        [item]: firebase.firestore.FieldValue.increment(-quantity)
-    }, { merge: true });
+    const now = new Date();
 
-    for (let [key, batchData] of batches) {
+    // Prepare deduction steps
+    for (let [key, entry] of batches) {
         if (remainingQuantity <= 0) break;
-        const batchNo = batchData.batchNo;
-        const availableBalance = batchBalances[batchNo];
 
-        if (availableBalance > 0) {
-            const deductAmount = Math.min(availableBalance, remainingQuantity);
-            deductions.push(`Deducted ${deductAmount} of ${item} from Batch: ${batchNo} (Expiry: ${batchData.expiryDate})`);
+        const batchNo = entry.batchNo;
+        const available = batchBalances[batchNo] || 0;
+
+        if (available > 0) {
+            const deductAmount = Math.min(available, remainingQuantity);
             remainingQuantity -= deductAmount;
             batchBalances[batchNo] -= deductAmount;
             latestBalance -= deductAmount;
 
-            historyUpdates[new Date().toISOString() + `-${key}`] = {
+            const timestamp = new Date().toISOString() + `-${key}`;
+            historyUpdates[timestamp] = {
                 datetime: new Date().toISOString(),
                 in: 0,
                 out: deductAmount,
+                balance: latestBalance,
                 batchNo: batchNo,
-                expiryDate: batchData.expiryDate,
-                balance: latestBalance
+                expiryDate: entry.expiryDate
             };
+
+            deductions.push(`Deducted ${deductAmount} of ${item} from Batch: ${batchNo} (Expiry: ${entry.expiryDate})`);
         }
     }
 
@@ -249,41 +246,70 @@ async function deductMaterial(item, quantity, productOrMaterial='material') {
         return;
     }
 
-    dbBatch.set(db.collection('history').doc(item), historyUpdates, { merge: true });
+    const materialRef = db.collection('materials').doc('materials');
+    const historyRef = db.collection('history').doc(item);
 
-    dbBatch.commit().then(async () => {
+    try {
+        await db.runTransaction(async (transaction) => {
+            const materialDoc = await transaction.get(materialRef);
+            const materials = materialDoc.exists ? materialDoc.data() : {};
+            const currentQty = materials[item] || 0;
+
+            if (currentQty < quantity) {
+                throw new Error(`Concurrent update conflict: current quantity (${currentQty}) is less than requested deduction (${quantity}).`);
+            }
+
+            // Update quantity
+            transaction.set(materialRef, {
+                [item]: firebase.firestore.FieldValue.increment(-quantity)
+            }, { merge: true });
+
+            // Update history
+            transaction.set(historyRef, historyUpdates, { merge: true });
+        });
+
         console.log(`Successfully deducted ${quantity} of ${item}.`);
         initializeMaterialCacheAndDropdowns();
         await fetchMaterialHistoryFromDB(item);
         showUpdateMessage('updateMessage', deductions.join('\n'));
-    }).catch((error) => {
-        console.error("Error committing batch: ", error);
+
+    } catch (error) {
+        console.error("Transaction failed: ", error);
         showUpdateMessage('updateMessage', `Error deducting ${item}: ${error.message}`, true);
-    });
+    }
 }
 
 
-function deleteMaterial(item) {
+async function deleteMaterial(item) {
     console.log(`Deleting ${item} from the database...`);
-    const batch = db.batch();
+
     const materialRef = db.collection('materials').doc('materials');
-
-    // Use set() with merge: true to remove the field instead of update()
-    batch.set(materialRef, {
-        [item]: firebase.firestore.FieldValue.delete()
-    }, { merge: true });
-
-    // Delete the material's history document
     const historyRef = db.collection('history').doc(item);
-    batch.delete(historyRef);
 
-    batch.commit().then(() => {
+    try {
+        await db.runTransaction(async (transaction) => {
+            const materialDoc = await transaction.get(materialRef);
+
+            if (!materialDoc.exists || !(item in materialDoc.data())) {
+                throw new Error(`${item} does not exist in the materials database.`);
+            }
+
+            // Delete the item field from the 'materials' doc
+            transaction.set(materialRef, {
+                [item]: firebase.firestore.FieldValue.delete()
+            }, { merge: true });
+
+            // Delete the item's history document
+            transaction.delete(historyRef);
+        });
+
         console.log(`Successfully deleted ${item}.`);
         initializeMaterialCacheAndDropdowns(); // Refresh material dropdown
-        delete cachedMaterialHistory[item]; // Remove the cache entry properly
+        delete cachedMaterialHistory[item]; // Remove the cache entry
         showUpdateMessage('updateMessage', `Successfully deleted ${item}.`);
-    }).catch((error) => {
+
+    } catch (error) {
         console.error("Error deleting item: ", error);
         showUpdateMessage('updateMessage', `Error deleting ${item}: ${error.message}`, true);
-    });
+    }
 }

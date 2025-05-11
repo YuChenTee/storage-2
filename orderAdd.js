@@ -4,6 +4,7 @@ function handleAddPendingMaterialFormSubmission() {
         e.preventDefault();
 
         const orderID = document.getElementById('orderID').value;
+        const prNumber = document.getElementById('prNumber').value.trim() || null;
         const materialKey = document.getElementById('pendingMaterialSelect').value.trim();
         const orderedQuantity = parseFloat(document.getElementById('orderedQuantity').value);
         const expectedArrivalDate = document.getElementById('expectedArrivalDate').value || null;
@@ -19,17 +20,18 @@ function handleAddPendingMaterialFormSubmission() {
             return;
         }
 
-        confirmAction(`Are you sure you want to add a pending order for ${materialKey}?`, () => addPendingMaterialToDB(orderID, materialKey, orderedQuantity, orderDate, expectedArrivalDate));
+        confirmAction(`Are you sure you want to add a pending order for ${materialKey}?`, () => addPendingMaterialToDB(orderID, prNumber, materialKey, orderedQuantity, orderDate, expectedArrivalDate));
     });
 }
 
-function addPendingMaterialToDB(orderID, materialKey, orderedQuantity, orderDate, expectedArrivalDate) {
+function addPendingMaterialToDB(orderID, prNumber, materialKey, orderedQuantity, orderDate, expectedArrivalDate) {
     console.log(`Adding pending order for ${materialKey} to the database...`);
 
     const ordersDocRef = db.collection('orders').doc('orders');
 
     const orderEntry = {
         orderID: orderID,
+        prNumber: prNumber,
         materialKey: materialKey,
         orderedQuantity: orderedQuantity,
         orderDate: orderDate,

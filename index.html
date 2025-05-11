@@ -454,6 +454,9 @@
                 <label for="orderID">Purchase Order No:</label>
                 <input type="text" id="orderID" required>
 
+                <label for="prNumber">PR Number:</label>
+                <input type="text" id="prNumber">
+
                 <label for="pendingMaterialSelect">Select Material:</label>
                 <select id="pendingMaterialSelect"></select>
 
@@ -488,12 +491,13 @@
                 <table id="pendingOrdersTable">
                     <thead>
                         <tr>
-                            <th onclick="sortTable('pendingOrdersTable',0, [3],[1,4])" class="sortable">Purchase Order No</th>
-                            <th onclick="sortTable('pendingOrdersTable',1, [3],[1,4])" class="sortable">Order Date</th>
-                            <th onclick="sortTable('pendingOrdersTable',2, [3],[1,4])" class="sortable">Material</th>
-                            <th onclick="sortTable('pendingOrdersTable',3, [3],[1,4])" class="sortable">Ordered Quantity</th>
-                            <th onclick="sortTable('pendingOrdersTable',4, [3],[1,4])" class="sortable">Expected Arrival Date</th>
-                            <th onclick="sortTable('pendingOrdersTable',5, [3],[1,4])" class="sortable">Status</th>
+                            <th onclick="sortTable('pendingOrdersTable',0, [4],[2,5])" class="sortable">Purchase Order No</th>
+                            <th onclick="sortTable('pendingOrdersTable',1, [4],[2,5])" class="sortable">PR Number</th>
+                            <th onclick="sortTable('pendingOrdersTable',2, [4],[2,5])" class="sortable">Order Date</th>
+                            <th onclick="sortTable('pendingOrdersTable',3, [4],[2,5])" class="sortable">Material</th>
+                            <th onclick="sortTable('pendingOrdersTable',4, [4],[2,5])" class="sortable">Ordered Quantity</th>
+                            <th onclick="sortTable('pendingOrdersTable',5, [4],[2,5])" class="sortable">Expected Arrival Date</th>
+                            <th onclick="sortTable('pendingOrdersTable',6, [4],[2,5])" class="sortable">Status</th>
                         </tr>
                     </thead>
                     <tbody>

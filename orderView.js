@@ -19,11 +19,12 @@ async function populatePendingOrders() {
         const row = tableBody.insertRow();
 
         row.insertCell(0).textContent = orderID;
-        row.insertCell(1).textContent = formatDateTime(order.orderDate);
-        row.insertCell(2).textContent = order.materialKey;
-        row.insertCell(3).textContent = order.orderedQuantity;
-        row.insertCell(4).textContent = order.expectedArrivalDate ? formatDateTime(order.expectedArrivalDate, false) : 'N/A';
-        row.insertCell(5).textContent = order.status || 'N/A';
+        row.insertCell(1).textContent = order.prNumber || 'N/A';
+        row.insertCell(2).textContent = formatDateTime(order.orderDate);
+        row.insertCell(3).textContent = order.materialKey;
+        row.insertCell(4).textContent = order.orderedQuantity;
+        row.insertCell(5).textContent = order.expectedArrivalDate ? formatDateTime(order.expectedArrivalDate, false) : 'N/A';
+        row.insertCell(6).textContent = order.status || 'N/A';
 
         const option = document.createElement('option');
         option.value = orderID;

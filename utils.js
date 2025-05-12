@@ -539,7 +539,7 @@ async function downloadPurchaseOrders() {
 
       // Create a worksheet with the purchase order data
       const purchaseOrdersWorksheetData = [
-        ["Order ID", "Order Date", "Material Key", "Ordered Quantity", "Expected Arrival Date", "Status"] // Headers
+        ["Order ID", "PR Number", "Order Date", "Material Key", "Ordered Quantity", "Expected Arrival Date", "Status"] // Headers
       ];
 
       // Get the sorted purchase order IDs
@@ -550,18 +550,14 @@ async function downloadPurchaseOrders() {
         const order = cachedOrders[orderID];
 
         let materialKey = order.materialKey || 'N/A';
+        let prNumber = order.prNumber || 'N/A'; 
         let orderedQuantity = order.orderedQuantity || 0;
         let status = order.status || 'N/A';
         let expectedArrivalDate = order.expectedArrivalDate ? formatDateTime(order.expectedArrivalDate, false) : 'N/A';
 
-        // Handle ordered quantity and status if partial received
-        if (status.includes('Partial Received:')) {
-          const partialReceivedAmount = parseFloat(status.split(' ')[2]);
-          orderedQuantity -= partialReceivedAmount; // Adjust the quantity based on partial received
-        }
-
         purchaseOrdersWorksheetData.push([
           orderID,
+          prNumber,
           formatDateTime(order.orderDate),
           materialKey,
           Math.round(orderedQuantity * 1000) / 1000, // Round to 3 decimal places

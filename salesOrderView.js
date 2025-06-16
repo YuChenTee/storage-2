@@ -138,15 +138,10 @@ async function populateMaterialCheckFields(products, quantities) {
         const buffer = cachedBuffers[product] || 0;
         const days = cachedDays[product] || 1;
 
-        // Check if the row for this product already exists
-        let productRow = document.getElementById(`product-row-${product}`);
-
-        if (productRow) {
-            // If the row exists, update the input values
-            document.getElementById(`quantity-${product}`).value = totalQuantity;
-            document.getElementById(`days-${product}`).value = days;
-            document.getElementById(`buffer-${product}`).value = buffer;
-        }
+        // If the row exists, update the input values
+        document.getElementById(`quantity-${product}`).value = totalQuantity;
+        document.getElementById(`days-${product}`).value = days;
+        document.getElementById(`buffer-${product}`).value = buffer;
     });
 }
 

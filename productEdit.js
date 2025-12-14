@@ -195,7 +195,7 @@ async function saveEditedProductDetails() {
         }
 
         // Then save updated material data to the new product ID
-        await db.collection('products').doc(newProductId).set(productData, { merge: true });
+        await db.collection('products').doc(newProductId).set(productData);
 
         showUpdateMessage('updateMessage5', `Product updated successfully!`);
         cachedProductDetails[newProductId] = productData;

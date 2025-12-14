@@ -357,6 +357,8 @@
             <form id="editProductForm">
                 <label for="editProductSelect">Select Product:</label>
                 <select id="editProductSelect" style="width: 100%;" required onchange="handleEditProductSelection()"></select>
+                <label for="editProductName">Product Name:</label>
+                <input type="text" id="editProductName" required>
                 <label for="editProductMaterialSelect">Select Materials:</label>
                 <select id="editProductMaterialSelect" multiple style="width: 100%;"></select>
                 <div id="editSelectedMaterialsContainer">
@@ -378,7 +380,7 @@
                 <button id="removeProductButton" type="submit">Remove Product</button>
             </form>
             <!-- Message display -->
-            <div id="updateMessage5" style="display:none; margin-top: 10px; font-weight: bold;"></div>
+            <div id="updateMessage12" style="display:none; margin-top: 10px; font-weight: bold;"></div>
         </div>
 
         <!-- Material History Section -->

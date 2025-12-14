@@ -30,21 +30,18 @@ function handleEditProductSelection() {
 }
 
 function loadProductDetails(productId) {
-    // Check if product details are in the cache first
-    let productData;
     if (cachedProductDetails.hasOwnProperty(productId)) {
         productData = cachedProductDetails[productId];
         console.log(`Product details for ${productId} retrieved from cache.`);
-        populateEditProductForm(productData);
+        populateEditProductForm(productData, productId);
     } else {
-        // Fetch product details from Firestore
         const productRef = db.collection('products').doc(productId);
         productRef.get().then((doc) => {
             if (doc.exists) {
                 productData = doc.data();
                 console.log(`Product details for ${productId} retrieved from database.`);
-                cachedProductDetails[productId] = productData; // Cache the product details
-                populateEditProductForm(productData);
+                cachedProductDetails[productId] = productData;
+                populateEditProductForm(productData, productId);
             } else {
                 showUpdateMessage('updateMessage5', 'Product not found!', true);
             }
@@ -54,27 +51,44 @@ function loadProductDetails(productId) {
     }
 }
 
-// Populate the edit product form with materials, quantities, and constants
-function populateEditProductForm(productData) {
-    // Populate the material selections
+
+function populateEditProductForm(productData, productId) {
+    // Split productId into code + name
+    const firstSpaceIndex = productId.indexOf(" ");
+    let productCode = "";
+    let productName = "";
+
+    if (firstSpaceIndex !== -1) {
+        productCode = productId.substring(0, firstSpaceIndex);
+        productName = productId.substring(firstSpaceIndex + 1);
+    } else {
+        productCode = productId;
+        productName = "";
+    }
+
+    // Store code somewhere so “save” can access it later
+    $('#editProductName').data('productCode', productCode);
+
+    // Auto-fill only product name field
+    $('#editProductName').val(productName);
+
+    // Existing material loading logic ↓
     const materialSelect = $('#editProductMaterialSelect');
     materialSelect.val(Object.keys(productData)).trigger('change');
 
-    // Populate material quantities and constants
     const container = $('#editSelectedMaterialsContainer');
     container.empty();
     container.append(`<button type="button" id="enlargeEditMaterialContainerBtn" onclick="changeEditMaterialContainerDisplay()">Enlarge</button>`);
 
-    // Sort the material IDs
     const sortedMaterialIds = Object.keys(productData).sort();
 
     sortedMaterialIds.forEach(materialId => {
-        const materialData = productData[materialId]; // Assume {quantity, constant}
-        
+        const materialData = productData[materialId];
+
         const inputGroup = `
             <div class="material-quantity-group" data-material-id="${materialId}">
-                <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom:5px;">
-                    <label for="materialQuantity_${materialId}" style="margin-right: 10px; margin-bottom:0">${materialId}:</label>
+                <div style="display:flex; align-items:center; justify-content:flex-start; margin-bottom:5px;">
+                    <label for="materialQuantity_${materialId}" style="margin-right:10px; margin-bottom:0">${materialId}:</label>
                     <img src="cancel-button.png" class="remove-material" data-material-id="${materialId}" style="cursor:pointer; width:16px; height:16px;">
                 </div>
                 <input type="number" id="materialQuantity_${materialId}" min="0" step="any" value="${materialData.quantity}" required>
@@ -85,14 +99,10 @@ function populateEditProductForm(productData) {
         container.append(inputGroup);
     });
 
-    // Bind remove icon click handlers
     $('.remove-material').on('click', function () {
         const materialIdToRemove = $(this).data('material-id');
-
-        // Remove from select2
         const currentSelection = $('#editProductMaterialSelect').val() || [];
         const updatedSelection = currentSelection.filter(id => id !== materialIdToRemove);
-;
         $('#editProductMaterialSelect').val(updatedSelection).trigger('change');
     });
 }
@@ -153,34 +163,59 @@ function handleEditProductMaterialSelection() {
     });
 }
 
-// Save edited product details, including materials, quantities, and constants
-function saveEditedProductDetails() {
-    const productId = $('#editProductSelect').val();
+async function saveEditedProductDetails() {
+    const oldProductId = $('#editProductSelect').val();
+    const newProductName = $('#editProductName').val().trim();
+
+    if (!newProductName) {
+        showUpdateMessage('updateMessage5', 'Product name cannot be empty.', true);
+        return;
+    }
+
+    // Get original product code stored earlier
+    const productCode = $('#editProductName').data('productCode');
+
+    // Recombine to form the new full ID
+    const newProductId = productCode + " " + newProductName;
+
     const materialSelections = $('#editProductMaterialSelect').select2('data');
+    let productData = {};
 
-    if (materialSelections.length > 0) {
-        let productData = {};
-        materialSelections.forEach(material => {
-            const materialId = material.id;
-            
-            const materialQuantity = parseFloat(document.getElementById(`materialQuantity_${materialId}`).value.trim()) || 0;
-            const materialConstant = parseFloat(document.getElementById(`materialConstant_${materialId}`).value.trim()) || 0;
-            productData[materialId] = { quantity: materialQuantity, constant: materialConstant };
-        });
+    materialSelections.forEach(material => {
+        const id = material.id;
+        const qty = parseFloat($(`#materialQuantity_${CSS.escape(id)}`).val()) || 0;
+        const constant = parseFloat($(`#materialConstant_${CSS.escape(id)}`).val()) || 0;
+        productData[id] = { quantity: qty, constant };
+    });
 
-        // Save the updated product details in the products collection
-        db.collection('products').doc(productId).set(productData)
-            .then(() => {
-                showUpdateMessage('updateMessage5', `${productId} updated successfully!`);
-                cachedProductDetails[productId] = productData; // Update cached product details
-            })
-            .catch(error => {
-                console.error('Error updating product details:', error);
-            });
-    } else {
-        showUpdateMessage('updateMessage5', 'Please select materials with quantities.', true);
+    try {
+        // Rename Firestore document + update references everywhere
+        if (newProductId !== oldProductId) {
+            await renameProductEverywhere(oldProductId, newProductId);
+        }
+
+        // Then save updated material data to the new product ID
+        await db.collection('products').doc(newProductId).set(productData, { merge: true });
+
+        showUpdateMessage('updateMessage5', `Product updated successfully!`);
+        cachedProductDetails[newProductId] = productData;
+        delete cachedProductDetails[oldProductId];
+        
+        // Refresh all caches in the correct order
+        await fetchProductListfromDB();
+        await fetchSalesOrdersFromDB();
+        
+        // Update UI
+        populateProductDropdown(cachedProductList);
+        populateSalesOrders();
+        $('#editProductSelect').val(newProductId).trigger('change');
+
+    } catch (err) {
+        console.error(err);
+        showUpdateMessage('updateMessage5', 'Error updating product.', true);
     }
 }
+
 
 function changeEditMaterialContainerDisplay() {
     const container = document.getElementById('editSelectedMaterialsContainer');

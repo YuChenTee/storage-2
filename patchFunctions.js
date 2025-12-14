@@ -86,3 +86,98 @@ async function renameMaterialName(oldName, newName) {
         console.error(`❌ Error renaming material:`, error);
     }
 }
+
+async function renameProductEverywhere(oldName, newName) {
+    const batch = db.batch();
+
+    console.log(`Renaming product from "${oldName}" to "${newName}"...`);
+
+    // 1️⃣ Move product document in "products" collection
+    const oldDocRef = db.collection('products').doc(oldName);
+    const newDocRef = db.collection('products').doc(newName);
+    const oldDoc = await oldDocRef.get();
+
+    if (!oldDoc.exists) {
+        console.error(`Product "${oldName}" not found in 'products' collection.`);
+        return;
+    }
+
+    // Copy data to new doc
+    batch.set(newDocRef, oldDoc.data());
+    batch.delete(oldDocRef);
+
+    // 2️⃣ Update product_list document
+    const productListRef = db.collection('product_list').doc('product_list');
+    const productListDoc = await productListRef.get();
+
+    if (productListDoc.exists) {
+        const data = productListDoc.data();
+        const newData = {};
+
+        for (const key in data) {
+            // update key
+            const newKey = key.includes(oldName) ? key.replace(oldName, newName) : key;
+
+            // update value
+            let value = data[key];
+            if (typeof value === "string") {
+                value = value.replace(oldName, newName);
+            }
+
+            newData[newKey] = value;
+        }
+
+        batch.set(productListRef, newData);
+    }
+
+    // 3️⃣ Update all sales orders
+    const salesOrdersRef = db.collection('salesOrder').doc('salesOrder');
+    const salesOrdersSnap = await salesOrdersRef.get();
+
+    if (salesOrdersSnap.exists) {
+        const soData = salesOrdersSnap.data();
+        const updatedSalesOrders = {};
+
+        for (const orderId in soData) {
+            const order = soData[orderId];
+
+            if (!Array.isArray(order.products)) {
+                updatedSalesOrders[orderId] = order;
+                continue;
+            }
+
+            const updatedProducts = order.products.map(p => {
+                if (p.product === oldName) {
+                    return { ...p, product: newName };
+                }
+                return p;
+            });
+
+            updatedSalesOrders[orderId] = {
+                ...order,
+                products: updatedProducts
+            };
+        }
+
+        batch.set(salesOrdersRef, updatedSalesOrders);
+    }
+
+    // 4️⃣ Update buffer and numOfDays collections
+    for (const collectionName of ['buffer', 'numOfDays']) {
+        const ref = db.collection(collectionName).doc(collectionName);
+        const docSnap = await ref.get();
+        if (docSnap.exists) {
+            const data = docSnap.data();
+            const newData = {};
+            for (const key in data) {
+                const newKey = key === oldName ? newName : key;
+                newData[newKey] = data[key];
+            }
+            batch.set(ref, newData);
+        }
+    }
+
+    // 5️⃣ Commit all updates atomically
+    await batch.commit();
+    console.log(`✅ Product "${oldName}" successfully renamed to "${newName}" everywhere!`);
+}

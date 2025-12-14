@@ -21,6 +21,7 @@
                         <a href="#" onclick="showSection('materialCheck', this)">Calculate Material</a>
                         <a href="#" onclick="showSection('viewSalesOrders', this)">View Pending Orders</a>
                         <a href="#" onclick="showSection('addSalesOrder', this)">Add Sales Order</a>
+                        <a href="#" onclick="showSection('editSalesOrder', this)">Edit Sales Order</a>
                     </div>
                 </li>
                 <li class="dropdown">
@@ -192,6 +193,31 @@
 
                 <!-- Message display -->
                 <div id="updateMessage9" style="display:none; margin-top: 10px; font-weight: bold;"></div>
+            </form>
+        </div>
+
+        <!-- Edit Sales Order Section -->
+        <div id="editSalesOrder" class="section" style="display: none;">
+            <h2>Edit Sales Order</h2>
+            <form id="editSalesOrderForm">
+                <label for="editSalesOrderSelect">Select Sales Order:</label>
+                <select id="editSalesOrderSelect" style="width: 100%;">
+                    <option value="">-- Select Sales Order --</option>
+                </select>
+                
+                <label for="editSOProductSelect">Product:</label>
+                <select id="editSOProductSelect" multiple required></select>
+                
+                <label for="editSalesOrderQuantities">Quantities (Unit):</label>
+                <input type="text" id="editSalesOrderQuantities" placeholder="e.g., 10, 20, 15">
+
+                <label for="editExpectedDeliveryDate">Expected Delivery Date:</label>
+                <input type="date" id="editExpectedDeliveryDate">
+                
+                <button type="submit">Save Changes</button>
+
+                <!-- Message display -->
+                <div id="updateMessage13" style="display:none; margin-top: 10px; font-weight: bold;"></div>
             </form>
         </div>
 
@@ -563,6 +589,7 @@
     <script src="orderView.js"></script>
     <script src="salesOrderAdd.js"></script>
     <script src="salesOrderView.js"></script>
+    <script src="salesOrderEdit.js"></script>
     <script src="utils.js"></script>
     <script src="patchFunctions.js"></script>
 </body>

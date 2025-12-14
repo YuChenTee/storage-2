@@ -14,6 +14,8 @@ function initializeSelect2() {
     $('#orderMaterialSelect').select2();
     $('#SOProductSelect').select2();
     $('#salesOrderSelect').select2();
+    $('#editSalesOrderSelect').select2();
+    $('#editSOProductSelect').select2();
 }
 
 // Function to populate dropdowns after fetching data
@@ -30,6 +32,7 @@ function populateProductDropdown(products) {
         updateDropdownOptions('removeProductSelect', products, 'value'); // Populate for Remove Product section
         updateDropdownOptions('editProductSelect', products, 'value'); // Populate for Edit Product section
         updateDropdownOptions('SOProductSelect', products, 'value'); // Populate for Order Product section
+        updateDropdownOptions('editSOProductSelect', products, 'value'); // Populate for Edit Sales Order section
     }
 }
 

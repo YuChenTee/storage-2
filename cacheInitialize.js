@@ -165,6 +165,7 @@ function initializeSalesOrderCacheAndDropdowns() {
     fetchSalesOrdersFromDB().then(() => {
         console.log("Sales order cache initialized.");
         populateSalesOrders();
+        populateEditSalesOrderDropdown();
     }).catch(error => {
         console.error("Error initializing sales order cache: ", error);
     });

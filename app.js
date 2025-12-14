@@ -37,5 +37,7 @@ window.onload = function() {
     handleMoveToInventoryFormSubmission();
     handleAddSalesOrderFormSubmission();
     handleSalesOrderFormSubmission();
+    handleEditSalesOrderFormSubmission();
+    initializeEditSalesOrderListener();
     fetchBuffersFromDB();
 };
